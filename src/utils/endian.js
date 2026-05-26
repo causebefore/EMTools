@@ -46,17 +46,17 @@ export function reverseBytes(hexStr) {
 }
 
 export function bytesToUint16BE(bytes, offset) {
-  return (bytes[offset] << 8) | bytes[offset + 1]
+  return ((bytes[offset] << 8) | bytes[offset + 1]) >>> 0
 }
 
 export function bytesToUint16LE(bytes, offset) {
-  return bytes[offset] | (bytes[offset + 1] << 8)
+  return (bytes[offset] | (bytes[offset + 1] << 8)) >>> 0
 }
 
 export function bytesToUint32BE(bytes, offset) {
-  return (bytes[offset] << 24) | (bytes[offset + 1] << 16) | (bytes[offset + 2] << 8) | bytes[offset + 3]
+  return ((bytes[offset] << 24) | (bytes[offset + 1] << 16) | (bytes[offset + 2] << 8) | bytes[offset + 3]) >>> 0
 }
 
 export function bytesToUint32LE(bytes, offset) {
-  return bytes[offset] | (bytes[offset + 1] << 8) | (bytes[offset + 2] << 16) | (bytes[offset + 3] << 24)
+  return (bytes[offset] | (bytes[offset + 1] << 8) | (bytes[offset + 2] << 16) | (bytes[offset + 3] << 24)) >>> 0
 }

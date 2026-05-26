@@ -4,8 +4,14 @@
 export function convertRadix(value, fromRadix, toRadix) {
   if (!value || fromRadix < 2 || fromRadix > 36 || toRadix < 2 || toRadix > 36) return ''
   try {
-    const num = parseInt(value, fromRadix)
-    if (isNaN(num)) return ''
+    const cleaned = String(value).replace(/^0x|0b|0o/i, '').replace(/\s/g, '')
+    let num = 0n
+    const bigFrom = BigInt(fromRadix)
+    for (const ch of cleaned) {
+      const digit = parseInt(ch, fromRadix)
+      if (isNaN(digit)) return ''
+      num = num * bigFrom + BigInt(digit)
+    }
     return num.toString(toRadix).toUpperCase()
   } catch {
     return ''
