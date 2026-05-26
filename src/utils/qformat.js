@@ -13,20 +13,24 @@ export function floatToQ(value, m, n) {
 }
 
 export function qToFloat(qValue, m, n) {
-  let val = qValue
   const totalBits = m + n + 1
-  const signBit = 1 << (totalBits - 1)
-  if (val & signBit) {
-    val = val - (1 << totalBits)
+  if (qValue < 0) {
+    return qValue / Math.pow(2, n)
   }
-  return val / Math.pow(2, n)
+  let val = BigInt(qValue)
+  const signBit = 1n << BigInt(totalBits - 1)
+  if (val & signBit) {
+    val = val - (1n << BigInt(totalBits))
+  }
+  return Number(val) / Math.pow(2, n)
 }
 
 export function qToHex(qValue, bits) {
-  if (qValue < 0) {
-    qValue = (1 << bits) + qValue
+  let val = BigInt(qValue)
+  if (val < 0) {
+    val = (1n << BigInt(bits)) + val
   }
-  return '0x' + qValue.toString(16).toUpperCase().padStart(Math.ceil(bits / 4), '0')
+  return '0x' + val.toString(16).toUpperCase().padStart(Math.ceil(bits / 4), '0')
 }
 
 export function qRange(m, n) {

@@ -99,7 +99,7 @@ function calcBitOps() {
       aBin: formatBits(a, bits),
       bBin: formatBits(b, bits),
     }
-  } catch { bitResult.value = {} }
+  } catch { bitResult.value = { error: '输入格式无效，请输入有效的十六进制数（如 0xFF）' } }
 }
 watch([bitA, bitB, bitBitIndex, bitShlBits, bitShrBits, bitExtStart, bitExtLen], calcBitOps, { immediate: true })
 
@@ -115,7 +115,7 @@ function calcEndian() {
       swap64: '0x' + swap64(v).toString(16).toUpperCase().padStart(16, '0'),
       reversed: reverseBytes(endianHex.value),
     }
-  } catch { endianResult.value = {} }
+  } catch { endianResult.value = { error: '输入格式无效，请输入有效的十六进制数' } }
 }
 watch(endianHex, calcEndian, { immediate: true })
 
@@ -167,7 +167,7 @@ const tsResult = ref('')
 function calcTimestamp() {
   const input = tsInput.value.trim()
   if (!input) { tsResult.value = ''; return }
-  tsResult.value = timestampToDate(input, 'full') ?? '无效时间戳'
+  tsResult.value = timestampToDate(input, undefined, tsUnit.value) ?? '无效时间戳'
 }
 const tsDateInput = ref('')
 const tsDateResult = ref('')
@@ -189,10 +189,11 @@ const byteArrayInput = ref('48 65 6C 6C 6F')
 const byteArrayResult = ref('')
 function formatByteArray() {
   const hex = byteArrayInput.value.replace(/\s/g, '')
-  if (!/^[0-9A-Fa-f]*$/.test(hex)) { byteArrayResult.value = '无效'; return }
+  if (!/^[0-9A-Fa-f]*$/.test(hex)) { byteArrayResult.value = '无效：输入包含非Hex字符'; return }
+  if (hex.length % 2 !== 0) { byteArrayResult.value = '无效：Hex字符串长度必须为偶数'; return }
   const bytes = []
   for (let i = 0; i < hex.length; i += 2) {
-    if (i + 2 <= hex.length) bytes.push('0x' + hex.substring(i, i + 2).toUpperCase())
+    bytes.push('0x' + hex.substring(i, i + 2).toUpperCase())
   }
   byteArrayResult.value = `{ ${bytes.join(', ')} }`
 }
@@ -349,6 +350,7 @@ initNow()
     <!-- 位操作 -->
     <div v-if="activeTab === 'bit'" class="card">
       <p class="tab-desc">按位与/或/异或/非/移位，支持位测试、置位、清零、翻转和位段提取。</p>
+      <div v-if="bitResult.error" style="color:#e74c3c;margin:8px 0;font-size:13px">{{ bitResult.error }}</div>
       <div class="form-row">
         <label>操作数A:</label>
         <input v-model="bitA" class="mono" placeholder="0xFF" />
@@ -406,6 +408,7 @@ initNow()
     <!-- 字节序 -->
     <div v-if="activeTab === 'endian'" class="card">
       <p class="tab-desc">大端/小端字节序转换（16/32/64位），支持字节反转。</p>
+      <div v-if="endianResult.error" style="color:#e74c3c;margin:8px 0;font-size:13px">{{ endianResult.error }}</div>
       <div class="form-row">
         <label>Hex值:</label>
         <input v-model="endianHex" class="mono" placeholder="12345678" style="flex:1;max-width:300px" />

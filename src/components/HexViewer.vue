@@ -76,12 +76,14 @@ function draw() {
   const dk = isDark()
   const W = props.bytesPerLine * CELL_W + ADDR_W + GAP_W + props.bytesPerLine * ASCII_W + PAD * 2
   const H = container.value?.clientHeight || 500
+  const dpr = window.devicePixelRatio || 1
   viewportHeight.value = H
 
-  c.width = W
-  c.height = H
+  c.width = Math.floor(W * dpr)
+  c.height = Math.floor(H * dpr)
   c.style.width = W + 'px'
   c.style.height = H + 'px'
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
 
   ctx.clearRect(0, 0, W, H)
 

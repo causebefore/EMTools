@@ -18,7 +18,9 @@ function copyText(text: string | null | undefined) {
       window.utools.copyText(String(text))
       showToast('已复制')
     } else {
-      navigator.clipboard.writeText(String(text)).then(() => showToast('已复制'))
+      navigator.clipboard.writeText(String(text))
+        .then(() => showToast('已复制'))
+        .catch(() => showToast('复制失败'))
     }
   }
 }
@@ -148,7 +150,7 @@ function openGitHub() {
       </nav>
       <div v-if="!sidebarCollapsed" class="sidebar-footer">
         <div class="footer-info">
-          <span>EMTools v1.0.3</span>
+          <span>EMTools v1.1.0</span>
           <span>Leo Liu &lt;lbq08@foxmail.com&gt;</span>
         </div>
         <button class="footer-link" @click="openGitHub" title="在浏览器中打开">GitHub ↗</button>

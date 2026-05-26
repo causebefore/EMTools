@@ -2,12 +2,19 @@
  * 时间戳转换
  */
 
-export function timestampToDate(ts, format) {
+export function timestampToDate(ts, format, unit = 'auto') {
   let ms
-  if (String(ts).length <= 10) {
+  if (unit === 'sec') {
     ms = Number(ts) * 1000
-  } else {
+  } else if (unit === 'ms') {
     ms = Number(ts)
+  } else {
+    // auto-detect
+    if (String(ts).length <= 10) {
+      ms = Number(ts) * 1000
+    } else {
+      ms = Number(ts)
+    }
   }
   const d = new Date(ms)
   if (isNaN(d.getTime())) return null

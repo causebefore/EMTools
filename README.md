@@ -5,7 +5,13 @@
 [![CI](https://img.shields.io/github/actions/workflow/status/causebefore/EMTools/ci.yml?branch=main&label=CI)](https://github.com/causebefore/EMTools/actions/workflows/ci.yml)
 [![License](https://img.shields.io/badge/license-MIT-blue)](./LICENSE)
 
-## 为什么需要它
+## 简介
+
+EMTools 是一个集成在 uTools 里的嵌入式开发工具箱，包含数据转换、CRC/哈希计算、编码转换、Hex 编辑器、点阵字库生成器、MAP 文件分析器等实用工具。它旨在帮助工程师提高效率，减少在多个工具之间切换的麻烦。
+
+欢迎 Star&Fork ：[https://github.com/causebefore/EMTools](https://github.com/causebefore/EMTools)
+
+## 使用场景
 
 嵌入式开发中，工程师频繁在数据手册、IDE、命令行和在线工具之间切换——查 ASCII 表、算 CRC、转大小端、解析 HEX 文件、生成点阵字库。EMTools 把这些操作整合到 uTools 里，Alt+Space 唤起，用完即走，不用再开浏览器翻在线工具。
 
@@ -35,6 +41,9 @@ OLED/LCD 屏幕开发必备：
 
 ### MAP 文件分析器
 
+![MAP 文件分析器_符号列表](docs/images/map-analyzer-symbols.png)
+![MAP 文件分析器_模块统计](docs/images/map-analyzer-modules.png)
+
 链接器生成的 MAP 文件动辄几百 KB，手动翻找符号和模块极其痛苦。MAP 分析器自动解析：
 
 - **格式支持**：GCC/ARM LD、Keil MDK、IAR 三种编译器 MAP 格式，自动检测
@@ -45,6 +54,8 @@ OLED/LCD 屏幕开发必备：
 - **模块柱状图**：Top 20 模块体积可视化
 
 ### 数据转换
+
+![数据转换](docs/images/data-converter.png)
 
 11 个子功能的一站式转换器：
 
@@ -88,9 +99,18 @@ OLED/LCD 屏幕开发必备：
 
 ## 安装
 
+### 1. 使用 release 包安装
+
 1. 安装 [uTools](https://u.tools)
-2. 下载 `EMTools_v1.0.3.upx` 双击安装
+2. 下载 `EMTools_v1.1.0.upx` 双击安装
 3. 或克隆仓库本地开发模式加载（见下方开发说明）
+
+### 2. 在 uTools 中搜索安装
+
+1. 打开 uTools，进入插件市场
+2. 搜索 `嵌入式开发工具集`
+3. 点击安装
+   ![插件市场安装](docs/images/install.png)
 
 ## 使用方式
 
@@ -165,6 +185,13 @@ uTools 开发模式下，`plugin.json` 中 `development.main` 指向 `http://loc
 - 协作行为规范见 [行为准则](./.github/CODE_OF_CONDUCT.md)
 - 安全漏洞请按 [安全策略](./.github/SECURITY.md) 私下报告
 - 使用帮助和提问方式见 [支持说明](./.github/SUPPORT.md)
+
+## 未来计划
+
+- **功能扩展**：增加更多实用工具，如寄存器配置生成器、内存映射可视化、在线文档快速访问等
+- **性能优化**：进一步提升大文件处理速度，优化 UI 响应
+- **用户体验**：增加主题支持、界面自定义、更多预设选项
+- **桌面端支持**：增加 Electron 独立应用版本，脱离 uTools 也能使用
 
 ## 作者
 

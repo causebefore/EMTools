@@ -42,11 +42,15 @@ function loadCharset(replace) {
 }
 
 async function loadFromFile() {
-  const r = await window.services.showOpenDialog({ properties: ['openFile'] })
-  if (!r?.[0]) return
-  const content = await window.services.readFile(r[0])
-  inputText.value = content.replace(/[\r\n\s]/g, '')
-  log(`已加载文件: ${r[0]}`)
+  try {
+    const r = await window.services.showOpenDialog({ properties: ['openFile'] })
+    if (!r?.[0]) return
+    const content = await window.services.readFile(r[0])
+    inputText.value = content.replace(/[\r\n\s]/g, '')
+    log(`已加载文件: ${r[0]}`)
+  } catch (e) {
+    log(`错误: 加载文件失败 - ${e.message}`)
+  }
 }
 
 function clearInput() { inputText.value = '' }
@@ -124,52 +128,59 @@ function getOpts() {
 }
 
 async function doGenerate(what) {
-  const chars = [...new Set([...inputText.value].filter(c => c.trim()))].sort()
-  if (!chars.length) { log('请先输入字符'); return }
+  try {
+    const chars = [...new Set([...inputText.value].filter(c => c.trim()))].sort()
+    if (!chars.length) { log('请先输入字符'); return }
 
-  const size = fontSize.value
-  const opts = getOpts()
-  log('='.repeat(40))
-  log(`开始生成字库: ${size}×${size}, ${opts.negative ? '阴码' : '阳码'}, ${opts.scanMode}, ${opts.lsbFirst ? 'LSB' : 'MSB'}`)
-  log(`字形: ${opts.fontFamily}${opts.bold ? ' 粗体' : ''}, 偏移(${opts.xOffset}, ${opts.yOffset}), 阈值${opts.threshold}`)
-  log(`字符数: ${chars.length}`)
+    // 清理文件名，防止路径遍历
+    const safeName = baseFilename.value.replace(/[\\/:*?"<>|]/g, '_').replace(/^\.+/, '')
 
-  // 生成所有字符点阵
-  const fontData = {}
-  for (let i = 0; i < chars.length; i++) {
-    fontData[chars[i]] = generateBitmap(chars[i], size, opts)
-    if ((i + 1) % 50 === 0) log(`进度: ${i + 1}/${chars.length}`)
+    const size = fontSize.value
+    const opts = getOpts()
+    log('='.repeat(40))
+    log(`开始生成字库: ${size}×${size}, ${opts.negative ? '阴码' : '阳码'}, ${opts.scanMode}, ${opts.lsbFirst ? 'LSB' : 'MSB'}`)
+    log(`字形: ${opts.fontFamily}${opts.bold ? ' 粗体' : ''}, 偏移(${opts.xOffset}, ${opts.yOffset}), 阈值${opts.threshold}`)
+    log(`字符数: ${chars.length}`)
+
+    // 生成所有字符点阵
+    const fontData = {}
+    for (let i = 0; i < chars.length; i++) {
+      fontData[chars[i]] = generateBitmap(chars[i], size, opts)
+      if ((i + 1) % 50 === 0) log(`进度: ${i + 1}/${chars.length}`)
+    }
+
+    if (what === 'header') {
+      const header = generateHeader(fontData, size, opts)
+      const filename = `${safeName}_${size}x${size}.h`
+      const path = `${outputDir.value || window.services.getPath('downloads')}/${filename}`
+      await window.services.writeFile(path, header)
+      log(`✓ C头文件已生成: ${path}`)
+    } else {
+      const { buffer, charCount, bytesPerChar } = generateBinary(fontData, size)
+      const dir = outputDir.value || window.services.getPath('downloads')
+      const base = `${dir}/${safeName}_${size}x${size}`
+
+      // 索引文件
+      const idxSize = charCount * 2
+      const idxPath = base + '_index.bin'
+      await window.services.writeFile(idxPath, buffer.slice(0, idxSize))
+      log(`✓ 索引: ${idxPath}`)
+
+      // 数据文件
+      const dataPath = base + '_data.bin'
+      await window.services.writeFile(dataPath, buffer.slice(idxSize))
+      log(`✓ 数据: ${dataPath}`)
+
+      // 信息文件
+      const info = `字库信息\n分辨率: ${size}×${size}\n字符数: ${charCount}\n每字符: ${bytesPerChar} 字节\n索引大小: ${idxSize} 字节\n数据大小: ${buffer.length - idxSize} 字节\n\n字符列表:\n${[...new Set([...inputText.value].filter(c => c.trim()))].sort().join('')}\n`
+      const infoPath = base + '_info.txt'
+      await window.services.writeFile(infoPath, info)
+      log(`✓ 信息: ${infoPath}`)
+    }
+    log('='.repeat(40))
+  } catch (e) {
+    log(`错误: ${e.message}`)
   }
-
-  if (what === 'header') {
-    const header = generateHeader(fontData, size, opts)
-    const filename = `${baseFilename.value}_${size}x${size}.h`
-    const path = `${outputDir.value || window.services.getPath('downloads')}/${filename}`
-    await window.services.writeFile(path, header)
-    log(`✓ C头文件已生成: ${path}`)
-  } else {
-    const { buffer, charCount, bytesPerChar } = generateBinary(fontData, size)
-    const dir = outputDir.value || window.services.getPath('downloads')
-    const base = `${dir}/${baseFilename.value}_${size}x${size}`
-
-    // 索引文件
-    const idxSize = charCount * 2
-    const idxPath = base + '_index.bin'
-    await window.services.writeFile(idxPath, buffer.slice(0, idxSize))
-    log(`✓ 索引: ${idxPath}`)
-
-    // 数据文件
-    const dataPath = base + '_data.bin'
-    await window.services.writeFile(dataPath, buffer.slice(idxSize))
-    log(`✓ 数据: ${dataPath}`)
-
-    // 信息文件
-    const info = `字库信息\n分辨率: ${size}×${size}\n字符数: ${charCount}\n每字符: ${bytesPerChar} 字节\n索引大小: ${idxSize} 字节\n数据大小: ${buffer.length - idxSize} 字节\n\n字符列表:\n${[...new Set([...inputText.value].filter(c => c.trim()))].sort().join('')}\n`
-    const infoPath = base + '_info.txt'
-    await window.services.writeFile(infoPath, info)
-    log(`✓ 信息: ${infoPath}`)
-  }
-  log('='.repeat(40))
 }
 </script>
 

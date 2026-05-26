@@ -4,6 +4,7 @@
 export function hexToFloat(hexStr) {
   hexStr = hexStr.replace(/^0x/i, '').replace(/\s/g, '')
   if (hexStr.length !== 8) return null
+  if (!/^[0-9A-Fa-f]+$/.test(hexStr)) return null
   const buf = new ArrayBuffer(4)
   const view = new DataView(buf)
   for (let i = 0; i < 4; i++) {
@@ -26,6 +27,7 @@ export function floatToHex(value) {
 export function hexToDouble(hexStr) {
   hexStr = hexStr.replace(/^0x/i, '').replace(/\s/g, '')
   if (hexStr.length !== 16) return null
+  if (!/^[0-9A-Fa-f]+$/.test(hexStr)) return null
   const buf = new ArrayBuffer(8)
   const view = new DataView(buf)
   for (let i = 0; i < 8; i++) {
@@ -48,6 +50,7 @@ export function doubleToHex(value) {
 export function decomposeFloat(hexStr) {
   hexStr = hexStr.replace(/^0x/i, '').replace(/\s/g, '')
   if (hexStr.length !== 8) return null
+  if (!/^[0-9A-Fa-f]+$/.test(hexStr)) return null
   const val = parseInt(hexStr, 16)
   const sign = (val >>> 31) & 1
   const exponent = (val >>> 23) & 0xFF
@@ -61,6 +64,7 @@ export function decomposeFloat(hexStr) {
 export function decomposeDouble(hexStr) {
   hexStr = hexStr.replace(/^0x/i, '').replace(/\s/g, '')
   if (hexStr.length !== 16) return null
+  if (!/^[0-9A-Fa-f]+$/.test(hexStr)) return null
   const high = parseInt(hexStr.substring(0, 8), 16)
   const low = parseInt(hexStr.substring(8, 16), 16)
   const sign = (high >>> 31) & 1

@@ -111,7 +111,11 @@ export function crcGenerateCCode(presetName) {
   lines.push('    while (len--) {')
 
   if (refIn) {
-    lines.push(`        crc = ${name}_table[(crc ^ *data++) & 0xFF] ^ (crc >> 8);`)
+    if (width > 8) {
+      lines.push(`        crc = ${name}_table[(crc ^ *data++) & 0xFF] ^ (crc >> 8);`)
+    } else {
+      lines.push(`        crc = ${name}_table[crc ^ *data++];`)
+    }
   } else {
     lines.push(`        crc = ${name}_table[((crc >> ${width - 8}) ^ *data++) & 0xFF] ^ (crc << 8);`)
   }
