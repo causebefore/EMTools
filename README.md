@@ -2,7 +2,7 @@
 
 > uTools 插件，专为嵌入式工程师打造的日常工具集。把数据转换、校验计算、固件处理、字库生成、内存分析整合在一个面板里，敲几个关键字就能调出。
 
-[![CI](https://img.shields.io/github/actions/workflow/status/causebefore/EMTools/ci.yml?branch=dev&label=CI)](https://github.com/causebefore/EMTools/actions/workflows/ci.yml)
+[![CI](https://img.shields.io/github/actions/workflow/status/causebefore/EMTools/ci.yml?branch=main&label=CI)](https://github.com/causebefore/EMTools/actions/workflows/ci.yml)
 [![License](https://img.shields.io/badge/license-MIT-blue)](./LICENSE)
 
 ## 为什么需要它
@@ -159,7 +159,7 @@ uTools 开发模式下，`plugin.json` 中 `development.main` 指向 `http://loc
 
 欢迎通过 Issue 和 Pull Request 参与改进 EMTools。
 
-默认开发分支为 `dev`，`master` 主要用于稳定版本发布与归档。
+默认开发分支为 `dev`，`main` 主要用于稳定版本发布与归档。
 
 - 提交缺陷或需求前，请先阅读 [贡献指南](./CONTRIBUTING.md)
 - 协作行为规范见 [行为准则](./.github/CODE_OF_CONDUCT.md)
