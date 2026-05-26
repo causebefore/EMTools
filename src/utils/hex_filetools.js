@@ -63,7 +63,10 @@ export function sliceBuffer(buffer, options = {}) {
 
 export function fillBuffer(buffer, options = {}) {
   const bytes = buffer instanceof Uint8Array ? buffer : new Uint8Array(buffer || 0)
-  const target = Math.max(0, parseNumericText(options.sizeText, bytes.length))
+  const requestedTarget = Math.max(0, parseNumericText(options.sizeText, bytes.length))
+  const target = options.position === 'align'
+    ? alignedSize(bytes.length, requestedTarget)
+    : requestedTarget
   const fillValue = parseNumericText(options.fillValueText, 0xFF) & 0xFF
   const result = new Uint8Array(target)
   result.fill(fillValue)
@@ -102,13 +105,16 @@ export function buildSlicePreview(fileSize, options = {}) {
 
 export function buildFillPreview(fileSize, options = {}) {
   const inputSize = Math.max(0, parseNumericText(fileSize, 0))
-  const targetSize = Math.max(0, parseNumericText(options.sizeText, inputSize))
+  const requestedTarget = Math.max(0, parseNumericText(options.sizeText, inputSize))
+  const position = ['head', 'align'].includes(options.position) ? options.position : 'tail'
+  const targetSize = position === 'align'
+    ? alignedSize(inputSize, requestedTarget)
+    : requestedTarget
   const fillValue = parseNumericText(options.fillValueText, 0xFF) & 0xFF
   const fillSize = Math.max(0, targetSize - inputSize)
   const truncatedSize = Math.max(0, inputSize - targetSize)
   const dataSize = Math.min(inputSize, targetSize)
   const outputSize = targetSize
-  const position = options.position === 'head' ? 'head' : 'tail'
   const segments = []
 
   if (targetSize >= inputSize && position === 'head' && fillSize) {
@@ -205,4 +211,9 @@ function fillSegment(size, outputSize, fillValue) {
     fillValue,
     widthPct: percent(size, outputSize),
   }
+}
+
+function alignedSize(inputSize, alignment) {
+  if (alignment <= 0) return inputSize
+  return Math.ceil(inputSize / alignment) * alignment
 }

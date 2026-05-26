@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, nextTick, inject } from 'vue'
+import { ref, computed, nextTick, inject, onUnmounted } from 'vue'
 import HexViewer from '../../components/HexViewer.vue'
 import {
   searchHex, searchAscii
@@ -238,7 +238,7 @@ function onMergeOverviewClick(e) {
   if (!mergeFiles.value.length) return
   const rect = e.currentTarget.getBoundingClientRect()
   const ratio = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width))
-  const center = mergePreview.value.minAddr + ratio * mergePreview.value.totalRange
+  const center = mergePreview.value.unitToAddr(ratio * MERGE_TIMELINE_WIDTH)
   const currentRange = activeMergeViewport.value
     ? activeMergeViewport.value.end - activeMergeViewport.value.start
     : Math.max(1, mergePreview.value.totalRange / 4)
@@ -512,8 +512,8 @@ async function mergeAddFiles() {
         name,
         size: parsed.data.length,
         baseAddr: parsed.baseAddr,
+        originalBaseAddr: parsed.baseAddr,
         endAddr: parsed.baseAddr + parsed.data.length - 1,
-        data: parsed.data,
       })
     } catch { /* skip unreadable files */ }
   }
@@ -536,10 +536,17 @@ function clearMergeFiles() {
 
 async function doMerge() {
   if (mergeFiles.value.length < 2) return
-  const segments = mergeFiles.value.map(f => ({
-    baseAddr: f.baseAddr,
-    data: f.data,
-  }))
+  const segments = []
+  for (const f of mergeFiles.value) {
+    const parsed = await readFirmwareForConvert(f.path)
+    const hasCustomBase = f.originalBaseAddr !== undefined && f.baseAddr !== f.originalBaseAddr
+    const baseAddr = hasCustomBase ? f.baseAddr : parsed.baseAddr
+    f.baseAddr = baseAddr
+    f.originalBaseAddr = parsed.baseAddr
+    f.size = parsed.data.length
+    f.endAddr = baseAddr + parsed.data.length - 1
+    segments.push({ baseAddr, data: parsed.data })
+  }
   const merged = mergeFirmwareSegments(segments, {
     mode: mergeMode.value,
     outputFmt: mergeOutputFmt.value,
@@ -560,6 +567,10 @@ function formatFromPath(path) {
 function toHexText(value) {
   return '0x' + Number(value || 0).toString(16).toUpperCase()
 }
+
+onUnmounted(() => {
+  hideMergeTooltip()
+})
 </script>
 
 <template>
@@ -711,8 +722,9 @@ function toHexText(value) {
 
         <div v-else class="merge-map-shell" @mouseleave="hideMergeTooltip">
           <div class="merge-map-toolbar">
-            <span class="mono">总范围 {{ formatRange(mergeStats.minAddr, mergeStats.maxAddr) }}</span>
-            <button class="btn btn-secondary btn-sm" @click="fitMergeAll">适应全部</button>
+            <span v-if="mergeStats" class="mono">总范围 {{ formatRange(mergeStats.minAddr, mergeStats.maxAddr) }}</span>
+            <span v-else class="mono">没有可合并数据</span>
+            <button class="btn btn-secondary btn-sm" @click="fitMergeAll" :disabled="!mergeStats">适应全部</button>
             <span v-if="mergeMode === 'address'" class="merge-scale-note">空隙已压缩显示</span>
           </div>
 

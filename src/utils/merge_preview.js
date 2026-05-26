@@ -77,6 +77,7 @@ export function createMergePreviewModel(files, options = {}) {
     ticks: scale.compressed
       ? buildBoundaryTicks(positioned, minAddr, maxAddr, scale, options.maxTicks || 8)
       : buildTicks(minAddr, maxAddr, totalRange, scale, options.maxTicks || 6),
+    unitToAddr: scale.unitToAddr,
   }
 }
 
@@ -93,8 +94,9 @@ function emptyModel(mode) {
     gaps: [],
     conflicts: [],
     viewport: { start: 0, end: 0, x: 0, width: 0 },
-    detail: { files: [], gaps: [], conflicts: [], ticks: [], minAddr: 0, maxAddr: 0, totalRange: 0 },
+    detail: { files: [], gaps: [], conflicts: [], ticks: [], minAddr: 0, maxAddr: 0, maxInclusive: 0, totalRange: 0 },
     ticks: [],
+    unitToAddr: () => 0,
   }
 }
 
@@ -354,6 +356,10 @@ function createLinearScale(minAddr, totalRange, widthUnits) {
   return {
     compressed: false,
     toUnits: addr => toUnits(addr, minAddr, totalRange, widthUnits),
+    unitToAddr: units => {
+      if (widthUnits <= 0) return minAddr
+      return minAddr + (Math.max(0, Math.min(widthUnits, units)) / widthUnits) * totalRange
+    },
   }
 }
 
@@ -396,9 +402,19 @@ function createCompressedAddressScale(files, minAddr, maxAddr, widthUnits, optio
       if (addr <= minAddr) return 0
       if (addr >= maxAddr) return widthUnits
       const segment = segments.find(item => addr >= item.start && addr <= item.end)
-      if (!segment || segment.end <= segment.start) return 0
+      if (!segment || segment.end <= segment.start) return toUnits(addr, minAddr, maxAddr - minAddr, widthUnits)
       const ratio = (addr - segment.start) / (segment.end - segment.start)
       return segment.unitStart + ratio * (segment.unitEnd - segment.unitStart)
+    },
+    unitToAddr(units) {
+      if (units <= 0) return minAddr
+      if (units >= widthUnits) return maxAddr
+      const segment = segments.find(item => units >= item.unitStart && units <= item.unitEnd)
+      if (!segment || segment.unitEnd <= segment.unitStart) {
+        return minAddr + (Math.max(0, Math.min(widthUnits, units)) / widthUnits) * (maxAddr - minAddr)
+      }
+      const ratio = (units - segment.unitStart) / (segment.unitEnd - segment.unitStart)
+      return segment.start + ratio * (segment.end - segment.start)
     },
   }
 }
