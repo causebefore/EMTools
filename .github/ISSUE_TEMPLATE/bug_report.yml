@@ -1,0 +1,73 @@
+name: Bug 反馈
+description: 报告可复现的问题
+title: "[Bug]: "
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        感谢反馈问题。请尽量提供完整信息，涉及工程或固件文件时请先脱敏。
+
+  - type: input
+    id: module
+    attributes:
+      label: 影响模块
+      description: 例如 Hex 工具、CRC 校验、MAP 分析、点阵字库、编码转换
+      placeholder: Hex 工具
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: 复现步骤
+      description: 请写出能稳定复现问题的步骤
+      placeholder: |
+        1. 打开...
+        2. 输入...
+        3. 点击...
+        4. 出现...
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: 期望结果
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: 实际结果
+    validations:
+      required: true
+
+  - type: input
+    id: os
+    attributes:
+      label: 操作系统
+      placeholder: Windows 11
+    validations:
+      required: true
+
+  - type: input
+    id: utools-version
+    attributes:
+      label: uTools 版本
+      placeholder: 例如 6.x
+
+  - type: input
+    id: emtools-version
+    attributes:
+      label: EMTools 版本
+      placeholder: 例如 1.0.3
+
+  - type: textarea
+    id: extra
+    attributes:
+      label: 补充信息
+      description: 可以粘贴日志、截图说明或最小示例。请不要上传未脱敏的工程文件。
+
