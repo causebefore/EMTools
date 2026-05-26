@@ -94,6 +94,25 @@ test('builds fill previews for tail fill, head fill, and truncation', () => {
   assert.equal(truncated.truncatedSize, 0x80)
 })
 
+test('align fill pads to the next size boundary instead of acting like tail fill', () => {
+  const preview = buildFillPreview(0x1234, {
+    sizeText: '0x1000',
+    fillValueText: '0xFF',
+    position: 'align',
+  })
+  const filled = fillBuffer(new Uint8Array([0xAA, 0xBB, 0xCC]), {
+    sizeText: '0x4',
+    fillValueText: '0x00',
+    position: 'align',
+  })
+
+  assert.equal(preview.position, 'align')
+  assert.equal(preview.targetSize, 0x2000)
+  assert.equal(preview.fillSize, 0xDCC)
+  assert.deepEqual(preview.segments.map(segment => [segment.kind, segment.size]), [['data', 0x1234], ['fill', 0xDCC]])
+  assert.deepEqual([...filled], [0xAA, 0xBB, 0xCC, 0x00])
+})
+
 test('merges binary and addressed firmware segments by address or concatenation', () => {
   const addressed = [
     { baseAddr: 0x08000002, data: new Uint8Array([0x22, 0x33]) },

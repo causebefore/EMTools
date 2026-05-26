@@ -133,3 +133,29 @@ test('detects contained and multi-file overlapping conflict ranges', () => {
     { start: 0x1400, end: 0x1500, fileIndexes: [0, 2], size: 0x100 },
   ])
 })
+
+test('empty preview detail has a complete address range shape', () => {
+  const model = createMergePreviewModel([
+    { name: 'empty.bin', baseAddr: 0x08000000, size: 0 },
+  ], { mode: 'address', colors })
+
+  assert.equal(model.files.length, 0)
+  assert.equal(model.detail.maxInclusive, 0)
+})
+
+test('compressed preview can map clicked timeline units back to addresses', () => {
+  const model = createMergePreviewModel([
+    { name: 'boot.bin', baseAddr: 0, size: 0x1000 },
+    { name: 'app.bin', baseAddr: 0x08000000, size: 0x1000 },
+  ], {
+    mode: 'address',
+    colors,
+    widthUnits: 1000,
+  })
+
+  const secondFileUnit = model.files[1].x + model.files[1].width / 2
+  const clickedAddr = model.unitToAddr(secondFileUnit)
+
+  assert.ok(clickedAddr >= 0x08000000)
+  assert.ok(clickedAddr <= 0x08001000)
+})
