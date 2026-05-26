@@ -1,0 +1,47 @@
+{
+  "name": "emtools",
+  "version": "1.0.3",
+  "description": "嵌入式开发工具箱 - uTools 插件",
+  "keywords": [
+    "utools",
+    "embedded",
+    "hex",
+    "crc",
+    "encoding",
+    "map",
+    "font-generator",
+    "vue"
+  ],
+  "author": {
+    "name": "Leo Liu",
+    "email": "lbq08@foxmail.com"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/causebefore/EMTools.git"
+  },
+  "bugs": {
+    "url": "https://github.com/causebefore/EMTools/issues"
+  },
+  "homepage": "https://github.com/causebefore/EMTools#readme",
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  },
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "test": "node --test test/*.test.mjs",
+    "build": "vite build"
+  },
+  "dependencies": {
+    "spark-md5": "^3.0.2",
+    "vue": "^3.5.13"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^5.2.1",
+    "utools-api-types": "^7.5.1",
+    "vite": "^6.0.11"
+  }
+}

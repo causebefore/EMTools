@@ -1,0 +1,39 @@
+{
+  "GPIO控制寄存器": [
+    {
+      "name": "MODE",
+      "start": 0,
+      "end": 1,
+      "default": "0",
+      "desc": "00=输入 01=输出 10=复用 11=模拟"
+    },
+    {
+      "name": "OTYPE",
+      "start": 2,
+      "end": 2,
+      "default": "0",
+      "desc": "0=推挽 1=开漏"
+    },
+    {
+      "name": "OSPEED",
+      "start": 3,
+      "end": 4,
+      "default": "0",
+      "desc": "00=低速 01=中速 10=高速 11=超高速"
+    },
+    {
+      "name": "PUPD",
+      "start": 5,
+      "end": 6,
+      "default": "0",
+      "desc": "00=无 01=上拉 10=下拉"
+    },
+    {
+      "name": "ODR",
+      "start": 7,
+      "end": 7,
+      "default": "0",
+      "desc": "输出数据"
+    }
+  ]
+}

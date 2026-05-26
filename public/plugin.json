@@ -1,0 +1,75 @@
+{
+  "main": "index.html",
+  "preload": "preload/services.js",
+  "logo": "logo.png",
+  "development": {
+    "main": "http://localhost:5173"
+  },
+  "features": [
+    {
+      "code": "main",
+      "explain": "嵌入式开发工具箱 - 数据转换/CRC/哈希/编码/位域等工具集",
+      "cmds": ["嵌入式工具箱", "工具箱", "emtools"]
+    },
+    {
+      "code": "hex-tool",
+      "explain": "Hex编辑器/固件文件格式转换",
+      "cmds": [
+        "Hex工具", "hex", "固件工具",
+        { "type": "files", "fileType": "file",
+          "extensions": ["hex", "bin", "s19", "srec", "mot"],
+          "label": "打开固件文件" }
+      ]
+    },
+    {
+      "code": "data-converter",
+      "explain": "进制转换/IEEE754浮点数/位操作/字节序/Q格式/BCD/时间戳/ASCII码表",
+      "cmds": ["数据转换", "进制转换", "IEEE754", "大小端", "BCD"]
+    },
+    {
+      "code": "hash-calculator",
+      "explain": "MD5/SHA1/SHA256/SHA512 文本和文件哈希",
+      "cmds": ["哈希", "hash", "MD5", "SHA", "SHA256"]
+    },
+    {
+      "code": "crc-calculator",
+      "explain": "CRC8/16/32校验计算+自定义参数+C代码生成",
+      "cmds": ["CRC", "CRC校验", "CRC计算", "crc calculator"]
+    },
+    {
+      "code": "encoding-converter",
+      "explain": "GBK/UTF-8/UTF-16编码转换+文件批量转码",
+      "cmds": [
+        "编码转换", "GBK", "UTF8转换",
+        { "type": "files", "fileType": "file",
+          "extensions": ["txt", "c", "h", "cpp", "hpp", "s", "py", "js", "html", "json", "xml", "md"],
+          "label": "查看文件编码" }
+      ]
+    },
+    {
+      "code": "bitfield-calculator",
+      "explain": "寄存器位域可视化/掩码生成/C代码生成",
+      "cmds": ["位域", "寄存器", "bitfield", "位域计算"]
+    },
+    {
+      "code": "font-generator",
+      "explain": "汉字点阵字库生成(OLED/LCD) + C头文件导出",
+      "cmds": [
+        "字库", "点阵", "字库生成",
+        { "type": "files", "fileType": "file",
+          "extensions": ["txt"],
+          "label": "加载字符集文件" }
+      ]
+    },
+    {
+      "code": "map-analyzer",
+      "explain": "GCC/Keil/IAR MAP文件分析+内存布局可视化",
+      "cmds": [
+        "MAP分析", "MAP", "内存分析",
+        { "type": "files", "fileType": "file",
+          "extensions": ["map"],
+          "label": "打开MAP文件" }
+      ]
+    }
+  ]
+}
