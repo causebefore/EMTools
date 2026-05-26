@@ -167,7 +167,7 @@ const tsResult = ref('')
 function calcTimestamp() {
   const input = tsInput.value.trim()
   if (!input) { tsResult.value = ''; return }
-  tsResult.value = timestampToDate(input) ?? '无效时间戳'
+  tsResult.value = timestampToDate(input, undefined, tsUnit.value) ?? '无效时间戳'
 }
 const tsDateInput = ref('')
 const tsDateResult = ref('')

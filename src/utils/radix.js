@@ -4,7 +4,7 @@
 export function convertRadix(value, fromRadix, toRadix) {
   if (!value || fromRadix < 2 || fromRadix > 36 || toRadix < 2 || toRadix > 36) return ''
   try {
-    const cleaned = String(value).replace(/^0x|0b|0o/i, '').replace(/\s/g, '')
+    const cleaned = String(value).replace(/^(0x|0b|0o)/i, '').replace(/\s/g, '')
     let num = 0n
     const bigFrom = BigInt(fromRadix)
     for (const ch of cleaned) {
