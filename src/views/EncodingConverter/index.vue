@@ -55,7 +55,7 @@ async function selectFile() {
       }
     }
   } catch (e) {
-    fileEncoding.value = '错误: ' + e.message
+    detectedEncoding.value = '错误: ' + e.message
   }
 }
 

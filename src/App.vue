@@ -18,7 +18,9 @@ function copyText(text: string | null | undefined) {
       window.utools.copyText(String(text))
       showToast('已复制')
     } else {
-      navigator.clipboard.writeText(String(text)).then(() => showToast('已复制'))
+      navigator.clipboard.writeText(String(text))
+        .then(() => showToast('已复制'))
+        .catch(() => showToast('复制失败'))
     }
   }
 }
