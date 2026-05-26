@@ -2,6 +2,8 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 
 import {
+  buildFillPreview,
+  buildSlicePreview,
   convertFirmware,
   fillBuffer,
   mergeFirmwareSegments,
@@ -48,6 +50,48 @@ test('slices and fills buffers with hex-style numeric inputs', () => {
     fillValueText: '0xFF',
     position: 'head',
   })], [0xFF, 0xFF, 0xAA, 0xBB])
+})
+
+test('builds slice previews with clamped byte ranges and percentages', () => {
+  const preview = buildSlicePreview(0x1000, {
+    startText: '0x100',
+    endText: '0x500',
+    lengthText: '',
+  })
+
+  assert.equal(preview.start, 0x100)
+  assert.equal(preview.end, 0x500)
+  assert.equal(preview.outputSize, 0x400)
+  assert.equal(preview.beforeSize, 0x100)
+  assert.equal(preview.afterSize, 0xB00)
+  assert.equal(preview.selectionLeftPct, 6.25)
+  assert.equal(preview.selectionWidthPct, 25)
+})
+
+test('builds fill previews for tail fill, head fill, and truncation', () => {
+  const tail = buildFillPreview(0x100, {
+    sizeText: '0x180',
+    fillValueText: '0xFF',
+    position: 'tail',
+  })
+  const head = buildFillPreview(0x100, {
+    sizeText: '0x180',
+    fillValueText: '0x00',
+    position: 'head',
+  })
+  const truncated = buildFillPreview(0x100, {
+    sizeText: '0x80',
+    fillValueText: '0xAA',
+    position: 'tail',
+  })
+
+  assert.deepEqual(tail.segments.map(segment => [segment.kind, segment.size]), [['data', 0x100], ['fill', 0x80]])
+  assert.deepEqual(head.segments.map(segment => [segment.kind, segment.size]), [['fill', 0x80], ['data', 0x100]])
+  assert.equal(tail.fillValue, 0xFF)
+  assert.equal(head.fillValue, 0x00)
+  assert.equal(truncated.truncated, true)
+  assert.deepEqual(truncated.segments.map(segment => [segment.kind, segment.size]), [['data', 0x80]])
+  assert.equal(truncated.truncatedSize, 0x80)
 })
 
 test('merges binary and addressed firmware segments by address or concatenation', () => {
