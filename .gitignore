@@ -41,3 +41,6 @@ release描述模板
 .codex-pet-runs/megane/qa/previews/waving.gif
 .codex-pet-runs/megane/references/canonical-base.png
 .git-workflow.yml
+TEST_PLAN.md
+test/hash_radix_timestamp.test.mjs
+test/vue_source_regression.test.mjs
