@@ -3,6 +3,8 @@
  */
 import SparkMD5 from 'spark-md5'
 
+export const MAX_HEX_INPUT_CHARS = 2 * 1024 * 1024
+
 export const HASH_ALGOS = [
   { id: 'md5', name: 'MD5', bits: 128 },
   { id: 'SHA-1', name: 'SHA-1', bits: 160 },
@@ -35,7 +37,10 @@ export function bufferToHex(buffer) {
 
 export async function hashBytes(bytes, algo) {
   if (algo === 'md5') {
-    return SparkMD5.ArrayBuffer.hash(bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength))
+    const buffer = bytes.byteOffset === 0 && bytes.byteLength === bytes.buffer.byteLength
+      ? bytes.buffer
+      : bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength)
+    return SparkMD5.ArrayBuffer.hash(buffer)
   }
   const hashBuffer = await crypto.subtle.digest(algo, bytes)
   return bufferToHex(hashBuffer)
@@ -45,6 +50,7 @@ export function hexToBytes(hex) {
   const cleaned = hex.replace(/^0x/i, '').replace(/\s/g, '')
   if (!/^[0-9A-Fa-f]*$/.test(cleaned)) return null
   if (cleaned.length % 2 !== 0) return null
+  if (cleaned.length > MAX_HEX_INPUT_CHARS) return null
   const bytes = new Uint8Array(cleaned.length / 2)
   for (let i = 0; i < cleaned.length; i += 2) {
     bytes[i / 2] = parseInt(cleaned.substring(i, i + 2), 16)
