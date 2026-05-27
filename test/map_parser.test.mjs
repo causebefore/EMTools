@@ -163,3 +163,111 @@ Image component sizes
   assert.equal(parsed.modules.find((module) => module.name === 'Library Totals'), undefined)
   assert.equal(parsed.modules.find((module) => module.name === 'mc_w.l'), undefined)
 })
+
+test('findSymbolByAddress 精确匹配', () => {
+  const symbols = [
+    { name: 'main', address: 0x08001000, size: 0x200, section: '.text' },
+    { name: 'printf', address: 0x08002000, size: 0x100, section: '.text' }
+  ]
+  const result = mapParser.findSymbolByAddress(symbols, 0x08001100)
+  assert.strictEqual(result.name, 'main')
+  assert.strictEqual(result.offset, 0x100)
+})
+
+test('findSymbolByAddress 降级匹配', () => {
+  const symbols = [
+    { name: 'main', address: 0x08001000, size: 0, section: '.text' },
+    { name: 'printf', address: 0x08002000, size: 0, section: '.text' }
+  ]
+  const result = mapParser.findSymbolByAddress(symbols, 0x08001500)
+  assert.strictEqual(result.name, 'main')
+  assert.strictEqual(result.offset, 0x500)
+  assert.strictEqual(result.isApproximate, true)
+})
+
+test('findSymbolByAddress 降级匹配只选择 floor', () => {
+  const symbols = [
+    { name: 'after', address: 0x08002000, size: 0, section: '.text' },
+    { name: 'before', address: 0x08001000, size: 0, section: '.text' }
+  ]
+  const result = mapParser.findSymbolByAddress(symbols, 0x08001500)
+  assert.strictEqual(result.name, 'before')
+  assert.strictEqual(result.offset, 0x500)
+})
+
+test('findSymbolByAddress 降级匹配 targetAddr 在所有符号之前', () => {
+  const symbols = [
+    { name: 'main', address: 0x08001000, size: 0, section: '.text' }
+  ]
+  const result = mapParser.findSymbolByAddress(symbols, 0x08000500)
+  assert.strictEqual(result, null)
+})
+
+test('findSymbolByAddress 无匹配', () => {
+  const result = mapParser.findSymbolByAddress([], 0x08001000)
+  assert.strictEqual(result, null)
+})
+
+test('getTopSymbols 正常排序', () => {
+  const symbols = [
+    { name: 'small', size: 10 },
+    { name: 'large', size: 100 },
+    { name: 'medium', size: 50 }
+  ]
+  const result = mapParser.getTopSymbols(symbols, 20)
+  assert.strictEqual(result.length, 3)
+  assert.strictEqual(result[0].name, 'large')
+  assert.strictEqual(result[0].rank, 1)
+  assert.strictEqual(result[1].name, 'medium')
+  assert.strictEqual(result[2].name, 'small')
+})
+
+test('getTopSymbols 过滤 size=0', () => {
+  const symbols = [
+    { name: 'valid', size: 100 },
+    { name: 'zero', size: 0 }
+  ]
+  const result = mapParser.getTopSymbols(symbols, 20)
+  assert.strictEqual(result.length, 1)
+  assert.strictEqual(result[0].name, 'valid')
+})
+
+test('getTopSymbols 不足 20 个', () => {
+  const symbols = [
+    { name: 'a', size: 10 },
+    { name: 'b', size: 20 }
+  ]
+  const result = mapParser.getTopSymbols(symbols, 20)
+  assert.strictEqual(result.length, 2)
+})
+
+test('getTopSymbols 空列表', () => {
+  const result = mapParser.getTopSymbols([], 20)
+  assert.deepStrictEqual(result, [])
+})
+
+test('parseRemovedSections 正常解析 Keil 格式', () => {
+  const content = `
+Removing Unused input sections from the image.
+
+  Removing startup_stm32f10x_hd.o(HEAP), (512 bytes).
+  Removing stm32f10x_adc.o(i.ADC_DeInit), (100 bytes).
+  Removing stm32f10x_adc.o(i.ADC_Init), (200 bytes).
+
+  495 unused section(s) (total 18894 bytes) removed from the image.
+`
+  const result = mapParser.parseRemovedSections(content)
+  assert.strictEqual(result.removedSections.length, 3)
+  assert.strictEqual(result.removedSections[0].object, 'startup_stm32f10x_hd.o')
+  assert.strictEqual(result.removedSections[0].name, 'HEAP')
+  assert.strictEqual(result.removedSections[0].size, 512)
+  assert.strictEqual(result.summary.count, 495)
+  assert.strictEqual(result.summary.totalSize, 18894)
+})
+
+test('parseRemovedSections 无删除段', () => {
+  const content = 'Some other content without removed sections'
+  const result = mapParser.parseRemovedSections(content)
+  assert.deepStrictEqual(result.removedSections, [])
+  assert.strictEqual(result.summary, null)
+})

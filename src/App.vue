@@ -1,6 +1,9 @@
 <script lang="ts" setup>
 import { onMounted, ref, defineAsyncComponent, provide } from 'vue'
 
+declare const __APP_VERSION__: string
+const version = __APP_VERSION__
+
 const toastVisible = ref(false)
 const toastMessage = ref('')
 let toastTimer: ReturnType<typeof setTimeout> | null = null
@@ -150,7 +153,7 @@ function openGitHub() {
       </nav>
       <div v-if="!sidebarCollapsed" class="sidebar-footer">
         <div class="footer-info">
-          <span>EMTools v1.1.0</span>
+          <span>EMTools v{{ version }}</span>
           <span>Leo Liu &lt;lbq08@foxmail.com&gt;</span>
         </div>
         <button class="footer-link" @click="openGitHub" title="在浏览器中打开">GitHub ↗</button>

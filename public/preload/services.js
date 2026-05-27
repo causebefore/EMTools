@@ -129,6 +129,22 @@ window.services = {
 
   parseMapFile(filePath) {
     const content = fs.readFileSync(filePath, 'utf-8')
-    return JSON.stringify(mapParser.parse(content))
+    const result = mapParser.parse(content)
+    const removed = mapParser.parseRemovedSections(content)
+    result.removedSections = removed.removedSections
+    result.removedSummary = removed.summary
+    return JSON.stringify(result)
+  },
+
+  parseRemovedSections(content) {
+    return mapParser.parseRemovedSections(content)
+  },
+
+  findSymbolByAddress(symbols, targetAddr) {
+    return mapParser.findSymbolByAddress(symbols, targetAddr)
+  },
+
+  getTopSymbols(symbols, limit) {
+    return mapParser.getTopSymbols(symbols, limit)
   }
 }
