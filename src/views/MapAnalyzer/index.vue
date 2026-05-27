@@ -265,6 +265,92 @@
           </div>
         </div>
       </div>
+
+      <!-- ========== Tab 5: 地址反查 ========== -->
+      <div v-show="activeTab === 4" class="tab-content">
+        <div class="card" style="padding: 16px;">
+          <div class="form-row" style="margin-bottom: 16px;">
+            <input
+              v-model="addressQuery"
+              type="text"
+              placeholder="输入十六进制地址 (如 0x08001234)"
+              style="flex: 1;"
+              @keyup.enter="queryAddress"
+            />
+            <button class="btn btn-primary" @click="queryAddress">查询</button>
+          </div>
+
+          <!-- 错误信息 -->
+          <div v-if="addressError" class="error-card" style="padding: 12px; color: #e53935;">
+            {{ addressError }}
+          </div>
+
+          <!-- 查询结果 -->
+          <div v-if="addressResult" class="result-card">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>符号名称</th>
+                  <th>起始地址</th>
+                  <th>大小</th>
+                  <th>偏移量</th>
+                  <th>段</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="mono">{{ addressResult.name }}</td>
+                  <td class="mono">{{ formatHex(addressResult.address) }}</td>
+                  <td class="mono">{{ addressResult.size }}</td>
+                  <td class="mono">{{ formatHex(addressResult.offset) }}</td>
+                  <td>{{ addressResult.section || '-' }}</td>
+                </tr>
+              </tbody>
+            </table>
+            <div v-if="addressResult.isApproximate" style="margin-top: 8px; color: #FF9800; font-size: 12px;">
+              * 降级匹配：地址不在符号范围内，显示最近的符号
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ========== Tab 6: 大符号 ========== -->
+      <div v-show="activeTab === 5" class="tab-content">
+        <div class="card" style="padding: 16px;">
+          <div style="font-size: 13px; color: var(--text-muted); margin-bottom: 12px;">
+            Flash 占用 Top {{ topSymbols.length }} (按符号大小排序)
+          </div>
+          <div style="max-height: 480px; overflow-y: auto; border: 1px solid var(--border); border-radius: 6px;">
+            <table class="data-table" style="border: none;">
+              <thead>
+                <tr>
+                  <th style="width: 50px;">排名</th>
+                  <th>符号名称</th>
+                  <th style="width: 130px;">地址</th>
+                  <th style="width: 90px;">大小</th>
+                  <th style="width: 110px;">段</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-if="topSymbols.length === 0">
+                  <td colspan="5" style="text-align: center; color: var(--text-muted); padding: 40px;">
+                    无符号数据
+                  </td>
+                </tr>
+                <tr v-for="sym in topSymbols" :key="sym.name + '_' + sym.address">
+                  <td style="text-align: center; color: var(--text-muted);">{{ sym.rank }}</td>
+                  <td class="mono" style="max-width: 280px; overflow: hidden; text-overflow: ellipsis;" :title="sym.name">
+                    {{ sym.name }}
+                  </td>
+                  <td class="mono">{{ formatHex(sym.address) }}</td>
+                  <td class="mono">{{ sym.size }}</td>
+                  <td>{{ sym.section || '-' }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
     </template>
   </div>
 </template>
@@ -284,12 +370,17 @@ const searchQuery = ref('')
 const sortKey = ref('')
 const sortDir = ref('asc')
 
+// 地址反查状态
+const addressQuery = ref('')
+const addressResult = ref(null)
+const addressError = ref('')
+
 const canvasRef = ref(null)
 const canvasContainer = ref(null)
 
 let resizeObserver = null
 
-const tabs = ['符号列表', '模块统计', '内存布局图', '模块柱状图']
+const tabs = ['符号列表', '模块统计', '内存布局图', '模块柱状图', '地址反查', '大符号']
 
 const symbolColumns = [
   { key: 'name', label: '名称', width: 'auto' },
@@ -372,6 +463,11 @@ const maxFlashSize = computed(() => {
   return topModules.value.length > 0 ? topModules.value[0].flashSize : 1
 })
 
+const topSymbols = computed(() => {
+  if (!data.value?.symbols) return []
+  return window.services.getTopSymbols(data.value.symbols, 20)
+})
+
 // ============================
 // 方法
 // ============================
@@ -415,6 +511,36 @@ function barGradient(idx) {
   const style = getComputedStyle(document.documentElement)
   const accent = style.getPropertyValue('--accent').trim() || '#4A90D9'
   return `linear-gradient(135deg, ${accent}, ${accent}${Math.round(opacity * 255).toString(16).padStart(2, '0')})`
+}
+
+function queryAddress() {
+  addressError.value = ''
+  addressResult.value = null
+
+  if (!addressQuery.value.trim()) {
+    addressError.value = '请输入地址'
+    return
+  }
+
+  // 解析地址
+  let addrStr = addressQuery.value.trim()
+  if (addrStr.startsWith('0x') || addrStr.startsWith('0X')) {
+    addrStr = addrStr.substring(2)
+  }
+
+  const targetAddr = parseInt(addrStr, 16)
+  if (isNaN(targetAddr)) {
+    addressError.value = '无效的地址格式'
+    return
+  }
+
+  // 调用查找算法
+  const result = window.services.findSymbolByAddress(data.value.symbols, targetAddr)
+  if (result) {
+    addressResult.value = result
+  } else {
+    addressError.value = '未找到包含该地址的符号'
+  }
 }
 
 async function openFile() {
