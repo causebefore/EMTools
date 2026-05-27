@@ -1,6 +1,8 @@
 <script lang="ts" setup>
 import { onMounted, ref, defineAsyncComponent, provide } from 'vue'
-import { version } from '../../package.json'
+
+declare const __APP_VERSION__: string
+const version = __APP_VERSION__
 
 const toastVisible = ref(false)
 const toastMessage = ref('')
