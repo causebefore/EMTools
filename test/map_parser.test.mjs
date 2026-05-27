@@ -163,3 +163,91 @@ Image component sizes
   assert.equal(parsed.modules.find((module) => module.name === 'Library Totals'), undefined)
   assert.equal(parsed.modules.find((module) => module.name === 'mc_w.l'), undefined)
 })
+
+test('Keil Grand Totals with thousand-separator spaces', () => {
+  const content = `
+ARM Linker
+
+Image component sizes
+
+      Code (inc. data)   RO Data    RW Data    ZI Data      Debug   Object Name
+
+       100          0          0          0          0          0   main.o
+
+    ======================================================================
+
+      Code (inc. data)   RO Data    RW Data    ZI Data      Debug
+
+     1 234          0          5       2 000      3 000          0   Grand Totals
+
+    Total RO  Size (Code + RO Data)                 1239 (   1.21kB)
+    Total RW  Size (RW Data + ZI Data)              5000 (   4.88kB)
+    Total ROM Size (Code + RO Data + RW Data)       3239 (   3.16kB)
+`
+  const parsed = mapParser.parse(content)
+
+  assert.equal(parsed.totals.code, 1234)
+  assert.equal(parsed.totals.roData, 5)
+  assert.equal(parsed.totals.rwData, 2000)
+  assert.equal(parsed.totals.ziData, 3000)
+})
+
+test('Keil padding and generated lines included in totals fallback', () => {
+  const content = `
+ARM Linker
+
+Image component sizes
+
+      Code (inc. data)   RO Data    RW Data    ZI Data      Debug   Object Name
+
+       100          0          0          0          0          0   main.o
+        50          0          0          0          0          0   utils.o
+
+    ----------------------------------------------------------------------
+       150          0          0          0          0          0   Object Totals
+         0          0          2          0          0          0   (incl. Generated)
+        10          0          2          4          0          0   (incl. Padding)
+
+    ----------------------------------------------------------------------
+        30          0          0          0          0          0   lib.o
+
+    ----------------------------------------------------------------------
+        30          0          0          0          0          0   Library Totals
+         4          0          0          0          4          0   (incl. Padding)
+
+    ----------------------------------------------------------------------
+`
+  const parsed = mapParser.parse(content)
+
+  // Without Grand Totals, totals = module sums + padding/generated
+  // modules: code=100+50+30=180, ro=0, rw=0, zi=0
+  // padding: code=10+4=14, ro=0, rw=2+0=2, zi=0
+  // generated: code=0, ro=0, rw=2, zi=0
+  // library padding: code=4, ro=0, rw=0, zi=4
+  // totals: code=194, ro=0, rw=4, zi=4
+  assert.equal(parsed.totals.code, 194)
+  assert.equal(parsed.totals.roData, 0)
+  assert.equal(parsed.totals.rwData, 4)
+  assert.equal(parsed.totals.ziData, 4)
+  assert.equal(parsed.totals.flashUsed, 194 + 0 + 4)
+  assert.equal(parsed.totals.ramUsed, 4 + 4)
+})
+
+test('Keil fallback symbol filter allows __ prefixed symbols', () => {
+  const content = `
+ARM Linker
+
+Global Symbols
+
+Symbol Name                              Value     Ov Type        Size  Object(Section)
+
+    __test_sym                              0x08000100
+    _printf_flags                           0x00000000   Number         0  stubs.o ABSOLUTE
+`
+  const parsed = mapParser.parse(content)
+
+  // __test_sym should be captured by fallback (non-standard format)
+  const sym = parsed.symbols.find(s => s.name === '__test_sym')
+  assert.ok(sym, '__ prefixed symbol should be captured by fallback')
+  assert.equal(sym.address, 0x08000100)
+})

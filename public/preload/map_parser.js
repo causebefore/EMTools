@@ -267,6 +267,8 @@ function parseKeil(content) {
   let inGlobalSymbols = false
   let componentTable = ''
   let explicitTotals = null
+  // 累积 Padding/Generated 行的值，确保模块总和与 Grand Totals 一致
+  let paddingTotals = { code: 0, roData: 0, rwData: 0, ziData: 0 }
 
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i]
@@ -317,13 +319,14 @@ function parseKeil(content) {
 
       // Grand Totals 行
       if (/Grand\s+Totals/i.test(trimmed)) {
-        const totalMatch = trimmed.match(/^(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+Grand\s+Totals/i)
+        const totalMatch = trimmed.match(/^(\d+(?:\s\d+)*)\s{2,}(\d+(?:\s\d+)*)\s{2,}(\d+(?:\s\d+)*)\s{2,}(\d+(?:\s\d+)*)\s{2,}(\d+(?:\s\d+)*)\s{2,}(\d+(?:\s\d+)*)\s+Grand\s+Totals/i)
         if (totalMatch) {
           explicitTotals = {
-            code: parseInt(totalMatch[1], 10),
-            roData: parseInt(totalMatch[3], 10),
-            rwData: parseInt(totalMatch[4], 10),
-            ziData: parseInt(totalMatch[5], 10),
+            code: parseNumber(totalMatch[1]),
+            roData: parseNumber(totalMatch[3]),
+            rwData: parseNumber(totalMatch[4]),
+            ziData: parseNumber(totalMatch[5]),
+
             flashTotal: 0,
             flashUsed: 0,
             ramTotal: 0,
@@ -334,18 +337,29 @@ function parseKeil(content) {
       }
 
       if (/^(Object|Library|ELF\s+Image|ROM)\s+Totals/i.test(trimmed)) continue
-      if (/^\(incl\./i.test(trimmed)) continue
+
+      // 解析 (incl. Padding) 和 (incl. Generated) 行，累积到 paddingTotals
+      if (/\(incl\./i.test(trimmed)) {
+        const inclMatch = trimmed.match(/\s*(\d+(?:\s\d+)*)\s{2,}(\d+(?:\s\d+)*)\s{2,}(\d+(?:\s\d+)*)\s{2,}(\d+(?:\s\d+)*)\s{2,}(\d+(?:\s\d+)*)\s{2,}(\d+(?:\s\d+)*)\s+\(incl\./)
+        if (inclMatch) {
+          paddingTotals.code += parseNumber(inclMatch[1])
+          paddingTotals.roData += parseNumber(inclMatch[2])
+          paddingTotals.rwData += parseNumber(inclMatch[3])
+          paddingTotals.ziData += parseNumber(inclMatch[4])
+        }
+        continue
+      }
       if (/^Total\s+(RO|RW|ROM)\s+Size/i.test(trimmed)) continue
       if (componentTable === 'libraryName' || componentTable === 'totals') continue
 
       // 模块行: 6 个数字 + 模块名
       // Code(inc.data) ROData RWData ZIData Debug ObjectName
-      const modMatch = trimmed.match(/^(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(.+)$/)
+      const modMatch = trimmed.match(/^(\d+(?:\s\d+)*)\s{2,}(\d+(?:\s\d+)*)\s{2,}(\d+(?:\s\d+)*)\s{2,}(\d+(?:\s\d+)*)\s{2,}(\d+(?:\s\d+)*)\s{2,}(\d+(?:\s\d+)*)\s+(.+)$/)
       if (modMatch) {
-        const code = parseInt(modMatch[1], 10)
-        const roData = parseInt(modMatch[3], 10)
-        const rwData = parseInt(modMatch[4], 10)
-        const ziData = parseInt(modMatch[5], 10)
+        const code = parseNumber(modMatch[1])
+        const roData = parseNumber(modMatch[3])
+        const rwData = parseNumber(modMatch[4])
+        const ziData = parseNumber(modMatch[5])
         const objName = modMatch[7].trim()
         if (/Totals$/i.test(objName) || /^\(incl\./i.test(objName) || /\.l$/i.test(objName)) continue
 
@@ -469,10 +483,10 @@ function parseKeil(content) {
       }
 
       // 备选匹配: 宽松模式 - 仅匹配地址和名称
-      const symFallback = trimmed.match(/^(.+?)\s{3,}0x([0-9a-fA-F]+)\s+/)
+      const symFallback = trimmed.match(/^(.+?)\s{3,}0x([0-9a-fA-F]+)\s*/)
       if (symFallback) {
         const symName = symFallback[1].trim()
-        if (/[a-zA-Z_]/.test(symName) && symName.length > 1 && !/^(Image|__)/.test(symName)) {
+        if (/[a-zA-Z_]/.test(symName) && symName.length > 1 && !/^Image/.test(symName)) {
           // 避免重复添加
           if (!symbols.find(s => s.name === symName)) {
             symbols.push({
@@ -494,7 +508,7 @@ function parseKeil(content) {
     inferMemoryRegions(modules, memoryRegions, sections)
   }
 
-  const totals = computeTotals(sections, modules, memoryRegions, explicitTotals)
+  const totals = computeTotals(sections, modules, memoryRegions, explicitTotals, paddingTotals)
 
   return {
     formatType: 'Keil',
@@ -697,18 +711,20 @@ function parseIAR(content) {
 // ============================================================
 
 /**
- * 解析 IAR 格式的数字（可能包含空格千位分隔符）
- * 例如 "4 096" => 4096
+ * 解析数字字符串（可能包含空格千位分隔符）
+ * 例如 "4 096" => 4096, "6 180" => 6180
  * @param {string} str
  * @returns {number}
  */
-function parseIARNumber(str) {
+function parseNumber(str) {
   if (!str) return 0
-  // 移除所有空格
   const cleaned = str.replace(/\s+/g, '')
   const val = parseInt(cleaned, 10)
   return isNaN(val) ? 0 : val
 }
+
+// 向后兼容别名
+const parseIARNumber = parseNumber
 
 function classifySection(name, address, memoryRegions) {
   let type = '其他'
@@ -791,9 +807,11 @@ function sectionCategory(name, section) {
  * @param {Array} sections
  * @param {Array} modules
  * @param {Array} memoryRegions
+ * @param {object} explicitTotals - 从 Grand Totals 行解析的显式汇总
+ * @param {object} paddingTotals - Padding/Generated 行的累积值
  * @returns {object}
  */
-function computeTotals(sections, modules, memoryRegions, explicitTotals) {
+function computeTotals(sections, modules, memoryRegions, explicitTotals, paddingTotals) {
   const totals = explicitTotals ? { ...explicitTotals } : {
     code: 0,
     roData: 0,
@@ -812,6 +830,13 @@ function computeTotals(sections, modules, memoryRegions, explicitTotals) {
       totals.roData += mod.ro_data || 0
       totals.rwData += mod.rw_data || 0
       totals.ziData += mod.zi_data || 0
+    }
+    // 加入 Padding/Generated 行的值
+    if (paddingTotals) {
+      totals.code += paddingTotals.code || 0
+      totals.roData += paddingTotals.roData || 0
+      totals.rwData += paddingTotals.rwData || 0
+      totals.ziData += paddingTotals.ziData || 0
     }
   }
 
