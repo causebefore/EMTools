@@ -3,7 +3,7 @@ import { ref, watch, computed, inject } from 'vue'
 import RadixTab from './tabs/RadixTab.vue'
 import FloatTab from './tabs/FloatTab.vue'
 import BitTab from './tabs/BitTab.vue'
-import { swap16, swap32, swap64, reverseBytes } from '../../utils/endian.js'
+import EndianTab from './tabs/EndianTab.vue'
 import { floatToQ, qToFloat, qToHex, qRange } from '../../utils/qformat.js'
 import { hexToBcd, bcdToHex } from '../../utils/bcd.js'
 import { timestampToDate, dateToTimestamp, currentTimestamp } from '../../utils/timestamp.js'
@@ -26,22 +26,6 @@ const tabs = [
 ]
 
 const copyText = inject('copyText', () => {})
-
-// ===== 字节序 =====
-const endianHex = ref('12345678')
-const endianResult = ref({})
-function calcEndian() {
-  try {
-    const v = BigInt('0x' + endianHex.value.replace(/\s/g, ''))
-    endianResult.value = {
-      swap16: '0x' + swap16(v).toString(16).toUpperCase().padStart(4, '0'),
-      swap32: '0x' + swap32(v).toString(16).toUpperCase().padStart(8, '0'),
-      swap64: '0x' + swap64(v).toString(16).toUpperCase().padStart(16, '0'),
-      reversed: reverseBytes(endianHex.value),
-    }
-  } catch { endianResult.value = { error: '输入格式无效，请输入有效的十六进制数' } }
-}
-watch(endianHex, calcEndian, { immediate: true })
 
 // ===== Q格式 =====
 const qm = ref(8)
@@ -221,22 +205,7 @@ initNow()
     <BitTab v-if="activeTab === 'bit'" />
 
     <!-- 字节序 -->
-    <div v-if="activeTab === 'endian'" class="card">
-      <p class="tab-desc">大端/小端字节序转换（16/32/64位），支持字节反转。</p>
-      <div v-if="endianResult.error" style="color:#e74c3c;margin:8px 0;font-size:13px">{{ endianResult.error }}</div>
-      <div class="form-row">
-        <label>Hex值:</label>
-        <input v-model="endianHex" class="mono" placeholder="12345678" style="flex:1;max-width:300px" />
-      </div>
-      <table class="data-table" style="max-width:400px">
-        <tbody>
-        <tr><td>16位 swap</td><td class="mono">{{ endianResult.swap16 }}</td><td><button class="copy-btn" @click="copyText(endianResult.swap16)">复制</button></td></tr>
-        <tr><td>32位 swap</td><td class="mono">{{ endianResult.swap32 }}</td><td><button class="copy-btn" @click="copyText(endianResult.swap32)">复制</button></td></tr>
-        <tr><td>64位 swap</td><td class="mono">{{ endianResult.swap64 }}</td><td><button class="copy-btn" @click="copyText(endianResult.swap64)">复制</button></td></tr>
-        <tr><td>字节反转</td><td class="mono">{{ endianResult.reversed }}</td><td><button class="copy-btn" @click="copyText(endianResult.reversed)">复制</button></td></tr>
-        </tbody>
-      </table>
-    </div>
+    <EndianTab v-if="activeTab === 'endian'" />
 
     <!-- Q格式 -->
     <div v-if="activeTab === 'qformat'" class="card">
