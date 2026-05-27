@@ -351,6 +351,58 @@
           </div>
         </div>
       </div>
+
+      <!-- ========== Tab 7: 死代码 ========== -->
+      <div v-show="activeTab === 6" class="tab-content">
+        <div class="card" style="padding: 16px;">
+          <!-- 统计卡片 -->
+          <div style="display: flex; gap: 20px; margin-bottom: 16px;">
+            <div class="card" style="padding: 12px 16px; flex: 1; text-align: center;">
+              <div style="font-size: 12px; color: var(--text-muted);">删除段数量</div>
+              <div style="font-size: 18px; font-weight: 700; color: #4CAF50; margin-top: 4px;">
+                {{ data.removedSections?.length || 0 }}
+              </div>
+            </div>
+            <div class="card" style="padding: 12px 16px; flex: 1; text-align: center;">
+              <div style="font-size: 12px; color: var(--text-muted);">总字节数</div>
+              <div style="font-size: 18px; font-weight: 700; color: #FF9800; margin-top: 4px;">
+                {{ formatSize(data.removedSummary?.totalSize || 0) }}
+              </div>
+            </div>
+          </div>
+
+          <!-- 表格 -->
+          <div v-if="groupedRemovedSections.length > 0" style="max-height: 440px; overflow-y: auto; border: 1px solid var(--border); border-radius: 6px;">
+            <table class="data-table" style="border: none;">
+              <thead>
+                <tr>
+                  <th style="text-align: left; min-width: 180px;">对象文件</th>
+                  <th style="text-align: left; min-width: 150px;">段名</th>
+                  <th style="text-align: right;">大小</th>
+                </tr>
+              </thead>
+              <tbody>
+                <template v-for="group in groupedRemovedSections" :key="group.object">
+                  <tr v-for="(sec, idx) in group.sections" :key="sec.name + '_' + idx">
+                    <td v-if="idx === 0" :rowspan="group.sections.length" class="mono">
+                      {{ group.object }}
+                      <div style="font-size: 11px; color: var(--text-muted);">
+                        合计: {{ formatSize(group.totalSize) }}
+                      </div>
+                    </td>
+                    <td class="mono">{{ sec.name }}</td>
+                    <td class="mono" style="text-align: right;">{{ formatSize(sec.size) }}</td>
+                  </tr>
+                </template>
+              </tbody>
+            </table>
+          </div>
+
+          <div v-else style="text-align: center; color: var(--text-muted); padding: 40px;">
+            无删除段数据（仅支持 Keil 格式）
+          </div>
+        </div>
+      </div>
     </template>
   </div>
 </template>
@@ -380,7 +432,7 @@ const canvasContainer = ref(null)
 
 let resizeObserver = null
 
-const tabs = ['符号列表', '模块统计', '内存布局图', '模块柱状图', '地址反查', '大符号']
+const tabs = ['符号列表', '模块统计', '内存布局图', '模块柱状图', '地址反查', '大符号', '死代码']
 
 const symbolColumns = [
   { key: 'name', label: '名称', width: 'auto' },
@@ -466,6 +518,24 @@ const maxFlashSize = computed(() => {
 const topSymbols = computed(() => {
   if (!data.value?.symbols) return []
   return window.services.getTopSymbols(data.value.symbols, 20)
+})
+
+const groupedRemovedSections = computed(() => {
+  if (!data.value?.removedSections) return []
+
+  const groups = {}
+  for (const sec of data.value.removedSections) {
+    if (!groups[sec.object]) {
+      groups[sec.object] = []
+    }
+    groups[sec.object].push(sec)
+  }
+
+  return Object.entries(groups).map(([object, sections]) => ({
+    object,
+    sections,
+    totalSize: sections.reduce((sum, s) => sum + s.size, 0)
+  }))
 })
 
 // ============================
