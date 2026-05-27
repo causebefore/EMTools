@@ -102,7 +102,7 @@ OLED/LCD 屏幕开发必备：
 ### 1. 使用 release 包安装
 
 1. 安装 [uTools](https://u.tools)
-2. 下载 `EMTools_v1.2.0.upx` 双击安装
+2. 下载最新 release 的 `.upx` 文件双击安装
 3. 或克隆仓库本地开发模式加载（见下方开发说明）
 
 ### 2. 在 uTools 中搜索安装

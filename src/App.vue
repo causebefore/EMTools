@@ -1,5 +1,6 @@
 <script lang="ts" setup>
 import { onMounted, ref, defineAsyncComponent, provide } from 'vue'
+import { version } from '../../package.json'
 
 const toastVisible = ref(false)
 const toastMessage = ref('')
@@ -150,7 +151,7 @@ function openGitHub() {
       </nav>
       <div v-if="!sidebarCollapsed" class="sidebar-footer">
         <div class="footer-info">
-          <span>EMTools v1.2.0</span>
+          <span>EMTools v{{ version }}</span>
           <span>Leo Liu &lt;lbq08@foxmail.com&gt;</span>
         </div>
         <button class="footer-link" @click="openGitHub" title="在浏览器中打开">GitHub ↗</button>
