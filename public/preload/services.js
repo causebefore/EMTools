@@ -130,5 +130,13 @@ window.services = {
   parseMapFile(filePath) {
     const content = fs.readFileSync(filePath, 'utf-8')
     return JSON.stringify(mapParser.parse(content))
+  },
+
+  findSymbolByAddress(symbols, targetAddr) {
+    return mapParser.findSymbolByAddress(symbols, targetAddr)
+  },
+
+  getTopSymbols(symbols, limit) {
+    return mapParser.getTopSymbols(symbols, limit)
   }
 }
