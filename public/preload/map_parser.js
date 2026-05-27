@@ -23,7 +23,7 @@ function detectFormat(content) {
     return 'Keil'
   }
 
-  if (upper.includes('IAR LINKER') || (upper.includes('ENTRY') && upper.includes('MODULE') && upper.includes('ADDRESS'))) {
+  if (upper.includes('IAR LINKER') || upper.includes('IAR ELF LINKER') || (upper.includes('ENTRY') && upper.includes('MODULE') && upper.includes('ADDRESS'))) {
     return 'IAR'
   }
 
@@ -465,7 +465,7 @@ function parseKeil(content) {
         let symType = '数据'
         const typeInfo = symMatch[3].trim()
         if (/Code|Thumb/i.test(typeInfo)) symType = '函数'
-        if (/Data|Number/i.test(typeInfo)) symType = '变量'
+        if (/Data/i.test(typeInfo)) symType = '变量'
 
         // 判断作用域
         let scope = 'Global'
@@ -551,22 +551,22 @@ function parseIAR(content) {
     if (/^[\*=\-]{3,}$/.test(trimmed)) continue
 
     // === 段检测 ===
-    if (/^\*\*\*\s*MODULE\s+SUMMARY/i.test(trimmed)) {
+    if (/^\*{3,}\s*MODULE\s+SUMMARY/i.test(trimmed)) {
       inModuleSummary = true
       inEntryList = false
       moduleHeaderPassed = false
       continue
     }
 
-    if (/^\*\*\*\s*ENTRY\s+LIST/i.test(trimmed)) {
+    if (/^\*{3,}\s*ENTRY\s+LIST/i.test(trimmed)) {
       inModuleSummary = false
       inEntryList = true
       continue
     }
 
-    if (/^\*\*\*\s*RUNTIME\s+MODULE/i.test(trimmed) ||
-        /^\*\*\*\s*END\s+OF/i.test(trimmed) ||
-        /^\*\*\*\s*ERROR/i.test(trimmed)) {
+    if (/^\*{3,}\s*RUNTIME\s+MODULE/i.test(trimmed) ||
+        /^\*{3,}\s*END\s+OF/i.test(trimmed) ||
+        /^\*{3,}\s*ERROR/i.test(trimmed)) {
       inModuleSummary = false
       inEntryList = false
       continue
@@ -590,7 +590,7 @@ function parseIAR(content) {
         // 数字可能包含千位分隔符空格: 4 096, 65 536
         // 更宽容的匹配
         // 先尝试标准格式: name  num  num  num
-        const modMatch = trimmed.match(/^(\S+(?:\.\w+)?)\s+(\d[\d\s]*)\s+(\d[\d\s]*)\s+(\d[\d\s]*)$/)
+        const modMatch = trimmed.match(/^(\S+(?:\.\w+)?)\s+(\d+(?:\s\d+)*)\s{2,}(\d+(?:\s\d+)*)\s{2,}(\d+(?:\s\d+)*)$/)
         if (modMatch) {
           const objName = modMatch[1].trim()
           const code = parseIARNumber(modMatch[2])
@@ -608,7 +608,7 @@ function parseIAR(content) {
         }
 
         // 备选: 尝试更宽松的匹配（处理末尾可能有多余文字）
-        const modLooseMatch = trimmed.match(/^(\S+)\s+(\d[\d\s]*)\s+(\d[\d\s]*)\s+(\d[\d\s]*)/)
+        const modLooseMatch = trimmed.match(/^(\S+)\s+(\d+(?:\s\d+)*)\s{2,}(\d+(?:\s\d+)*)\s{2,}(\d+(?:\s\d+)*)/)
         if (modLooseMatch) {
           const objName = modLooseMatch[1].trim()
           const code = parseIARNumber(modLooseMatch[2])
@@ -640,7 +640,7 @@ function parseIAR(content) {
       // main   0x08000189  256  Code  Gb
       // uart_init  0x08000400  48  Code  Lc
       // 数字可能包含千位分隔符空格
-      const entryMatch = trimmed.match(/^(\S+)\s+0x([0-9a-fA-F]+)\s+(\d[\d\s]*)\s+(\S+)\s+(\S+)/)
+      const entryMatch = trimmed.match(/^(\S+)\s+0x([0-9a-fA-F]+)\s+(\d+(?:\s\d+)*)\s+(\S+)\s+(\S+)/)
       if (entryMatch) {
         const symName = entryMatch[1].trim()
         const symAddr = parseInt(entryMatch[2], 16)
@@ -985,5 +985,6 @@ function parse(content) {
 
 module.exports = {
   parse,
+  parseKeil,
   detectFormat
 }
