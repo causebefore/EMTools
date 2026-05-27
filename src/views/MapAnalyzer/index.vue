@@ -62,7 +62,7 @@
           </div>
         </div>
         <div class="summary-item card" style="padding: 10px 16px; min-width: 80px;">
-          <div class="summary-label" style="font-size: 12px; color: var(--text-muted);">符号数</div>
+          <div class="summary-label" style="font-size: 12px; color: var(--text-muted);">Global 符号</div>
           <div class="summary-value" style="font-size: 16px; font-weight: 600;">{{ data.symbols?.length || 0 }}</div>
         </div>
         <div class="summary-item card" style="padding: 10px 16px; min-width: 80px;">
@@ -93,9 +93,53 @@
             placeholder="搜索符号名称、段、类型或作用域..."
             style="flex: 1;"
           />
+          <input
+            v-model="addressQuery"
+            type="text"
+            placeholder="地址反查 (如 08001234 或 0x08001234)"
+            style="width: 220px;"
+          />
           <span style="font-size: 12px; color: var(--text-muted); line-height: 32px;">
             共 {{ filteredSymbols.length }} 个符号
           </span>
+        </div>
+
+        <!-- 地址反查结果 -->
+        <div v-if="addressQuery.trim() && addressLookupResult" class="card address-lookup-card" style="margin-bottom: 12px; padding: 12px 16px;">
+          <template v-if="addressLookupResult.error">
+            <div style="color: #e53935; font-size: 13px;">{{ addressLookupResult.error }}</div>
+          </template>
+          <template v-else-if="addressLookupResult.found">
+            <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 8px;">
+              地址反查结果
+              <span v-if="addressLookupResult.degraded" style="color: #FF9800;"> (近似匹配，size=0 降级)</span>
+            </div>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px;">
+              <div>
+                <span style="font-size: 12px; color: var(--text-muted);">符号名</span>
+                <div class="mono" style="font-size: 13px; margin-top: 2px; word-break: break-all;">{{ addressLookupResult.symbol.name }}</div>
+              </div>
+              <div>
+                <span style="font-size: 12px; color: var(--text-muted);">起始地址</span>
+                <div class="mono" style="font-size: 13px; margin-top: 2px;">{{ formatHex(addressLookupResult.symbol.address) }}</div>
+              </div>
+              <div>
+                <span style="font-size: 12px; color: var(--text-muted);">大小</span>
+                <div class="mono" style="font-size: 13px; margin-top: 2px;">{{ addressLookupResult.symbol.size }} B</div>
+              </div>
+              <div>
+                <span style="font-size: 12px; color: var(--text-muted);">偏移量</span>
+                <div class="mono" style="font-size: 13px; margin-top: 2px;">+0x{{ addressLookupResult.offset.toString(16).toUpperCase() }} ({{ addressLookupResult.offset }} B)</div>
+              </div>
+              <div>
+                <span style="font-size: 12px; color: var(--text-muted);">所属 Section</span>
+                <div style="font-size: 13px; margin-top: 2px;">{{ addressLookupResult.symbol.section || '-' }}</div>
+              </div>
+            </div>
+          </template>
+          <template v-else>
+            <div style="color: var(--text-muted); font-size: 13px;">未找到匹配符号 (地址: 0x{{ addressLookupResult.target.toString(16).toUpperCase() }})</div>
+          </template>
         </div>
         <div style="max-height: 480px; overflow-y: auto; border: 1px solid var(--border); border-radius: 6px;">
           <table class="data-table" style="border: none;">
@@ -265,6 +309,42 @@
           </div>
         </div>
       </div>
+
+      <!-- ========== Tab 5: 大符号 Top-N ========== -->
+      <div v-show="activeTab === 4" class="tab-content">
+        <div style="font-size: 13px; color: var(--text-muted); margin-bottom: 12px;">
+          按大小排序的前 20 个符号
+        </div>
+        <div style="max-height: 480px; overflow-y: auto; border: 1px solid var(--border); border-radius: 6px;">
+          <table class="data-table" style="border: none;">
+            <thead>
+              <tr>
+                <th style="width: 50px; text-align: center;">排名</th>
+                <th style="text-align: left; min-width: 200px;">符号名</th>
+                <th style="text-align: right; width: 130px;">地址</th>
+                <th style="text-align: right; width: 100px;">大小 (B)</th>
+                <th style="text-align: right; width: 90px;">大小 (KB)</th>
+                <th style="text-align: left; width: 80px;">类型</th>
+                <th style="text-align: left; width: 110px;">Section</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-if="topSymbols.length === 0">
+                <td colspan="7" style="text-align: center; color: var(--text-muted); padding: 40px;">无符号数据</td>
+              </tr>
+              <tr v-for="(sym, idx) in topSymbols" :key="sym.name + '_' + sym.address + '_' + idx">
+                <td style="text-align: center; color: var(--text-muted);">{{ idx + 1 }}</td>
+                <td class="mono" style="max-width: 300px; overflow: hidden; text-overflow: ellipsis;" :title="sym.name">{{ sym.name }}</td>
+                <td class="mono" style="text-align: right;">{{ formatHex(sym.address) }}</td>
+                <td class="mono" style="text-align: right;">{{ sym.sizeNum }}</td>
+                <td class="mono" style="text-align: right;">{{ (sym.sizeNum / 1024).toFixed(2) }}</td>
+                <td>{{ sym.type || '-' }}</td>
+                <td>{{ sym.section || '-' }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
     </template>
   </div>
 </template>
@@ -281,6 +361,7 @@ const error = ref('')
 const data = ref(null)
 const activeTab = ref(0)
 const searchQuery = ref('')
+const addressQuery = ref('')  // 地址反查输入
 const sortKey = ref('')
 const sortDir = ref('asc')
 
@@ -289,7 +370,7 @@ const canvasContainer = ref(null)
 
 let resizeObserver = null
 
-const tabs = ['符号列表', '模块统计', '内存布局图', '模块柱状图']
+const tabs = ['符号列表', '模块统计', '内存布局图', '模块柱状图', '大符号']
 
 const symbolColumns = [
   { key: 'name', label: '名称', width: 'auto' },
@@ -370,6 +451,71 @@ const topModules = computed(() => {
 
 const maxFlashSize = computed(() => {
   return topModules.value.length > 0 ? topModules.value[0].flashSize : 1
+})
+
+// 地址反查结果
+const addressLookupResult = computed(() => {
+  const query = addressQuery.value.trim()
+  if (!query || !data.value?.symbols) return null
+
+  // 解析十六进制地址
+  let target = 0
+  if (query.startsWith('0x') || query.startsWith('0X')) {
+    target = parseInt(query, 16)
+  } else {
+    target = parseInt(query, 16)
+  }
+  if (isNaN(target) || target < 0) return { error: '地址格式无效' }
+
+  const symbols = data.value.symbols
+
+  // 精确匹配：symbol.address <= target < symbol.address + symbol.size
+  for (const sym of symbols) {
+    const addr = typeof sym.address === 'number' ? sym.address : parseInt(sym.address, 16) || 0
+    const size = Number(sym.size) || 0
+    if (size > 0 && addr <= target && target < addr + size) {
+      return {
+        found: true,
+        symbol: sym,
+        offset: target - addr,
+        target
+      }
+    }
+  }
+
+  // 降级匹配：对于 size=0 的符号，找 address <= target 的最近符号
+  const candidates = symbols
+    .map(sym => ({
+      sym,
+      addr: typeof sym.address === 'number' ? sym.address : parseInt(sym.address, 16) || 0
+    }))
+    .filter(item => item.addr <= target)
+    .sort((a, b) => b.addr - a.addr)
+
+  if (candidates.length > 0) {
+    return {
+      found: true,
+      symbol: candidates[0].sym,
+      offset: target - candidates[0].addr,
+      target,
+      degraded: true
+    }
+  }
+
+  return { found: false, target }
+})
+
+// 大符号 Top-20
+const topSymbols = computed(() => {
+  if (!data.value?.symbols) return []
+  return data.value.symbols
+    .filter(sym => (Number(sym.size) || 0) > 0)
+    .map(sym => ({
+      ...sym,
+      sizeNum: Number(sym.size) || 0
+    }))
+    .sort((a, b) => b.sizeNum - a.sizeNum)
+    .slice(0, 20)
 })
 
 // ============================
@@ -636,5 +782,10 @@ onUnmounted(() => {
 /* 空状态 */
 .empty-state {
   opacity: 0.8;
+}
+
+/* 地址反查卡片 */
+.address-lookup-card {
+  border-left: 3px solid var(--accent);
 }
 </style>
