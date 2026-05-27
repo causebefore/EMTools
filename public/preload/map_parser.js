@@ -125,6 +125,54 @@ function getTopSymbols(symbols, limit = 20) {
     }))
 }
 
+/**
+ * 解析 Keil MAP 文件中的已删除未使用段
+ * @param {string} content - MAP 文件内容
+ * @returns {object} { removedSections, summary }
+ */
+function parseRemovedSections(content) {
+  const lines = content.split(/\r?\n/)
+  const removedSections = []
+  let inRemovedSection = false
+  let summary = null
+
+  for (const line of lines) {
+    const trimmed = line.trim()
+
+    if (trimmed.includes('Removing Unused input sections')) {
+      inRemovedSection = true
+      continue
+    }
+
+    if (!inRemovedSection) continue
+
+    const removeMatch = trimmed.match(
+      /^Removing\s+(\S+)\((\S+)\),\s+\((\d+)\s+bytes\)\.$/
+    )
+    if (removeMatch) {
+      removedSections.push({
+        object: removeMatch[1],
+        name: removeMatch[2],
+        size: parseInt(removeMatch[3], 10)
+      })
+      continue
+    }
+
+    const summaryMatch = trimmed.match(
+      /^(\d+)\s+unused section\(s\)\s+\(total\s+(\d+)\s+bytes\)/
+    )
+    if (summaryMatch) {
+      summary = {
+        count: parseInt(summaryMatch[1], 10),
+        totalSize: parseInt(summaryMatch[2], 10)
+      }
+      break
+    }
+  }
+
+  return { removedSections, summary }
+}
+
 // ============================================================
 // 导出
 // ============================================================
@@ -133,5 +181,6 @@ module.exports = {
   parse,
   detectFormat,
   findSymbolByAddress,
-  getTopSymbols
+  getTopSymbols,
+  parseRemovedSections
 }

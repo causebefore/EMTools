@@ -226,3 +226,29 @@ test('getTopSymbols 空列表', () => {
   const result = mapParser.getTopSymbols([], 20)
   assert.deepStrictEqual(result, [])
 })
+
+test('parseRemovedSections 正常解析 Keil 格式', () => {
+  const content = `
+Removing Unused input sections from the image.
+
+  Removing startup_stm32f10x_hd.o(HEAP), (512 bytes).
+  Removing stm32f10x_adc.o(i.ADC_DeInit), (100 bytes).
+  Removing stm32f10x_adc.o(i.ADC_Init), (200 bytes).
+
+  495 unused section(s) (total 18894 bytes) removed from the image.
+`
+  const result = mapParser.parseRemovedSections(content)
+  assert.strictEqual(result.removedSections.length, 3)
+  assert.strictEqual(result.removedSections[0].object, 'startup_stm32f10x_hd.o')
+  assert.strictEqual(result.removedSections[0].name, 'HEAP')
+  assert.strictEqual(result.removedSections[0].size, 512)
+  assert.strictEqual(result.summary.count, 495)
+  assert.strictEqual(result.summary.totalSize, 18894)
+})
+
+test('parseRemovedSections 无删除段', () => {
+  const content = 'Some other content without removed sections'
+  const result = mapParser.parseRemovedSections(content)
+  assert.deepStrictEqual(result.removedSections, [])
+  assert.strictEqual(result.summary, null)
+})
