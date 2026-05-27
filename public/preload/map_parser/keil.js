@@ -4,6 +4,8 @@
  * uTools preload 脚本，遵循 CommonJS 规范
  */
 
+const { computeTotals, inferMemoryRegions } = require('./utils')
+
 // ============================================================
 // Keil MDK 解析器
 // ============================================================
@@ -11,11 +13,9 @@
 /**
  * 解析 Keil MDK MAP 文件
  * @param {string} content
- * @param {Function} computeTotalsFn - 公共 totals 计算函数（从主模块注入）
- * @param {Function} inferMemoryRegionsFn - 公共内存区域推断函数（从主模块注入）
  * @returns {object} 统一格式的解析结果
  */
-function parseKeil(content, computeTotalsFn, inferMemoryRegionsFn) {
+function parseKeil(content) {
   const symbols = []
   const sections = []
   const modules = []
@@ -254,10 +254,10 @@ function parseKeil(content, computeTotalsFn, inferMemoryRegionsFn) {
 
   // 如果没有解析到 memoryRegions，从模块汇总信息推断
   if (memoryRegions.length === 0) {
-    inferMemoryRegionsFn(modules, memoryRegions, sections)
+    inferMemoryRegions(modules, memoryRegions, sections)
   }
 
-  const totals = computeTotalsFn(sections, modules, memoryRegions, explicitTotals)
+  const totals = computeTotals(sections, modules, memoryRegions, explicitTotals)
 
   return {
     formatType: 'Keil',

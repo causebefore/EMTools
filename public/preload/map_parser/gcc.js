@@ -4,6 +4,8 @@
  * uTools preload 脚本，遵循 CommonJS 规范
  */
 
+const { computeTotals } = require('./utils')
+
 // ============================================================
 // GCC/ARM LD 解析器
 // ============================================================
@@ -11,10 +13,9 @@
 /**
  * 解析 GCC MAP 文件
  * @param {string} content
- * @param {Function} computeTotalsFn - 公共 totals 计算函数（从主模块注入）
  * @returns {object} 统一格式的解析结果
  */
-function parseGCC(content, computeTotalsFn) {
+function parseGCC(content) {
   const symbols = []
   const sections = []
   const modules = []
@@ -202,7 +203,7 @@ function parseGCC(content, computeTotalsFn) {
   }
 
   // 从 sections 计算 totals
-  const totals = computeTotalsFn(sections, [], memoryRegions)
+  const totals = computeTotals(sections, [], memoryRegions)
 
   return {
     formatType: 'GCC',

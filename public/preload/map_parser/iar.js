@@ -4,6 +4,8 @@
  * uTools preload 脚本，遵循 CommonJS 规范
  */
 
+const { computeTotals, inferMemoryRegions } = require('./utils')
+
 // ============================================================
 // IAR 解析器
 // ============================================================
@@ -11,11 +13,9 @@
 /**
  * 解析 IAR MAP 文件
  * @param {string} content
- * @param {Function} computeTotalsFn - 公共 totals 计算函数（从主模块注入）
- * @param {Function} inferMemoryRegionsFn - 公共内存区域推断函数（从主模块注入）
  * @returns {object} 统一格式的解析结果
  */
-function parseIAR(content, computeTotalsFn, inferMemoryRegionsFn) {
+function parseIAR(content) {
   const symbols = []
   const sections = []
   const modules = []
@@ -178,9 +178,9 @@ function parseIAR(content, computeTotalsFn, inferMemoryRegionsFn) {
   }
 
   // 推断内存区域
-  inferMemoryRegionsFn(modules, memoryRegions)
+  inferMemoryRegions(modules, memoryRegions)
 
-  const totals = computeTotalsFn(sections, modules, memoryRegions)
+  const totals = computeTotals(sections, modules, memoryRegions)
 
   return {
     formatType: 'IAR',
