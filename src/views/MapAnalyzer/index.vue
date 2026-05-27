@@ -523,15 +523,15 @@ const topSymbols = computed(() => {
 const groupedRemovedSections = computed(() => {
   if (!data.value?.removedSections) return []
 
-  const groups = {}
+  const groups = new Map()
   for (const sec of data.value.removedSections) {
-    if (!groups[sec.object]) {
-      groups[sec.object] = []
+    if (!groups.has(sec.object)) {
+      groups.set(sec.object, [])
     }
-    groups[sec.object].push(sec)
+    groups.get(sec.object).push(sec)
   }
 
-  return Object.entries(groups).map(([object, sections]) => ({
+  return Array.from(groups.entries()).map(([object, sections]) => ({
     object,
     sections,
     totalSize: sections.reduce((sum, s) => sum + s.size, 0)

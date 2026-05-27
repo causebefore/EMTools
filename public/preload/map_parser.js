@@ -94,18 +94,17 @@ function findSymbolByAddress(symbols, targetAddr) {
     }
   }
 
-  // 降级匹配：找最近地址的符号（针对 GCC size=0 的情况）
-  let nearest = null
-  let minDist = Infinity
+  // 降级匹配：找 address <= targetAddr 的最近符号（针对 GCC size=0 的情况）
+  let floor = null
   for (const sym of symbols) {
-    const dist = Math.abs(sym.address - targetAddr)
-    if (dist < minDist) {
-      minDist = dist
-      nearest = sym
+    if (sym.address <= targetAddr) {
+      if (!floor || sym.address > floor.address) {
+        floor = sym
+      }
     }
   }
 
-  return nearest ? { ...nearest, offset: targetAddr - nearest.address, isApproximate: true } : null
+  return floor ? { ...floor, offset: targetAddr - floor.address, isApproximate: true } : null
 }
 
 /**

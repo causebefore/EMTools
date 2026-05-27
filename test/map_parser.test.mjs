@@ -181,7 +181,26 @@ test('findSymbolByAddress 降级匹配', () => {
   ]
   const result = mapParser.findSymbolByAddress(symbols, 0x08001500)
   assert.strictEqual(result.name, 'main')
+  assert.strictEqual(result.offset, 0x500)
   assert.strictEqual(result.isApproximate, true)
+})
+
+test('findSymbolByAddress 降级匹配只选择 floor', () => {
+  const symbols = [
+    { name: 'after', address: 0x08002000, size: 0, section: '.text' },
+    { name: 'before', address: 0x08001000, size: 0, section: '.text' }
+  ]
+  const result = mapParser.findSymbolByAddress(symbols, 0x08001500)
+  assert.strictEqual(result.name, 'before')
+  assert.strictEqual(result.offset, 0x500)
+})
+
+test('findSymbolByAddress 降级匹配 targetAddr 在所有符号之前', () => {
+  const symbols = [
+    { name: 'main', address: 0x08001000, size: 0, section: '.text' }
+  ]
+  const result = mapParser.findSymbolByAddress(symbols, 0x08000500)
+  assert.strictEqual(result, null)
 })
 
 test('findSymbolByAddress 无匹配', () => {
