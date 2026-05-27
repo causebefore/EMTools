@@ -1,6 +1,6 @@
 <script setup>
 import { ref, watch, computed, inject } from 'vue'
-import { convertRadix, RADIX_NAMES } from '../../utils/radix.js'
+import RadixTab from './tabs/RadixTab.vue'
 import { hexToFloat, floatToHex, hexToDouble, doubleToHex, decomposeFloat, decomposeDouble } from '../../utils/ieee754.js'
 import { bitAnd, bitOr, bitXor, bitNot, bitShl, bitShr, bitTest, bitSet, bitClear, bitToggle, bitExtract, formatBits } from '../../utils/bitops.js'
 import { swap16, swap32, swap64, reverseBytes } from '../../utils/endian.js'
@@ -26,22 +26,6 @@ const tabs = [
 ]
 
 const copyText = inject('copyText', () => {})
-
-// ===== 进制转换 =====
-const radixInput = ref('255')
-const radixFrom = ref(10)
-const radixResults = ref({})
-
-function calcRadixAll() {
-  const results = {}
-  for (let r = 2; r <= 36; r++) {
-    results[r] = convertRadix(radixInput.value, radixFrom.value, r)
-  }
-  radixResults.value = results
-}
-watch([radixInput, radixFrom], calcRadixAll, { immediate: true })
-
-const commonRadices = [2, 8, 10, 16]
 
 // ===== 浮点数 =====
 const floatHex = ref('40490FDB')
@@ -288,27 +272,7 @@ initNow()
     </div>
 
     <!-- 进制转换 -->
-    <div v-if="activeTab === 'radix'" class="card">
-      <p class="tab-desc">在任意进制间转换数值，支持二进制到三十六进制。</p>
-      <div class="form-row">
-        <label>输入值:</label>
-        <input v-model="radixInput" class="mono" style="flex:1;max-width:300px" />
-        <select v-model.number="radixFrom" style="width:140px">
-          <option v-for="r in commonRadices" :key="r" :value="r">{{ RADIX_NAMES[r] }}</option>
-          <option :value="36">三十六进制</option>
-        </select>
-      </div>
-      <table class="data-table" style="max-width:500px">
-        <thead><tr><th>进制</th><th>值</th><th></th></tr></thead>
-        <tbody>
-          <tr v-for="r in commonRadices" :key="r">
-            <td>{{ RADIX_NAMES[r] }}</td>
-            <td class="mono">{{ radixResults[r] }}</td>
-            <td><button class="copy-btn" @click="copyText(radixResults[r])">复制</button></td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
+    <RadixTab v-if="activeTab === 'radix'" />
 
     <!-- 浮点数 -->
     <div v-if="activeTab === 'float'" class="card">
