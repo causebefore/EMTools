@@ -1,5 +1,5 @@
 <script setup>
-import { ref, inject, provide } from 'vue'
+import { ref, provide } from 'vue'
 import EditorTab from './tabs/EditorTab.vue'
 import FiletoolsTab from './tabs/FiletoolsTab.vue'
 import MergeTab from './tabs/MergeTab.vue'
@@ -7,8 +7,6 @@ import {
   convertFirmware,
   parseFirmwareBytes,
 } from '../../utils/hex_filetools.js'
-
-const copyText = inject('copyText', () => {})
 
 const activeTab = ref('editor')
 
@@ -81,4 +79,3 @@ function toHexText(value) {
   </div>
 </template>
 
-<style scoped>
