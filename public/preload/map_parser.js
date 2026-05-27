@@ -987,6 +987,23 @@ function findSymbolByAddress(symbols, targetAddr) {
   return nearest ? { ...nearest, offset: targetAddr - nearest.address, isApproximate: true } : null
 }
 
+/**
+ * 获取 Top-N 大符号
+ * @param {Array} symbols - 符号列表
+ * @param {number} limit - 返回数量限制，默认 20
+ * @returns {Array} 按大小降序排列的符号列表
+ */
+function getTopSymbols(symbols, limit = 20) {
+  return symbols
+    .filter(sym => sym.size > 0)
+    .sort((a, b) => b.size - a.size)
+    .slice(0, limit)
+    .map((sym, idx) => ({
+      rank: idx + 1,
+      ...sym
+    }))
+}
+
 // ============================================================
 // 导出
 // ============================================================
@@ -994,5 +1011,6 @@ function findSymbolByAddress(symbols, targetAddr) {
 module.exports = {
   parse,
   detectFormat,
-  findSymbolByAddress
+  findSymbolByAddress,
+  getTopSymbols
 }

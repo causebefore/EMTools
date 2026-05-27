@@ -188,3 +188,41 @@ test('findSymbolByAddress 无匹配', () => {
   const result = mapParser.findSymbolByAddress([], 0x08001000)
   assert.strictEqual(result, null)
 })
+
+test('getTopSymbols 正常排序', () => {
+  const symbols = [
+    { name: 'small', size: 10 },
+    { name: 'large', size: 100 },
+    { name: 'medium', size: 50 }
+  ]
+  const result = mapParser.getTopSymbols(symbols, 20)
+  assert.strictEqual(result.length, 3)
+  assert.strictEqual(result[0].name, 'large')
+  assert.strictEqual(result[0].rank, 1)
+  assert.strictEqual(result[1].name, 'medium')
+  assert.strictEqual(result[2].name, 'small')
+})
+
+test('getTopSymbols 过滤 size=0', () => {
+  const symbols = [
+    { name: 'valid', size: 100 },
+    { name: 'zero', size: 0 }
+  ]
+  const result = mapParser.getTopSymbols(symbols, 20)
+  assert.strictEqual(result.length, 1)
+  assert.strictEqual(result[0].name, 'valid')
+})
+
+test('getTopSymbols 不足 20 个', () => {
+  const symbols = [
+    { name: 'a', size: 10 },
+    { name: 'b', size: 20 }
+  ]
+  const result = mapParser.getTopSymbols(symbols, 20)
+  assert.strictEqual(result.length, 2)
+})
+
+test('getTopSymbols 空列表', () => {
+  const result = mapParser.getTopSymbols([], 20)
+  assert.deepStrictEqual(result, [])
+})
