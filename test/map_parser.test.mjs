@@ -163,3 +163,28 @@ Image component sizes
   assert.equal(parsed.modules.find((module) => module.name === 'Library Totals'), undefined)
   assert.equal(parsed.modules.find((module) => module.name === 'mc_w.l'), undefined)
 })
+
+test('findSymbolByAddress 精确匹配', () => {
+  const symbols = [
+    { name: 'main', address: 0x08001000, size: 0x200, section: '.text' },
+    { name: 'printf', address: 0x08002000, size: 0x100, section: '.text' }
+  ]
+  const result = mapParser.findSymbolByAddress(symbols, 0x08001100)
+  assert.strictEqual(result.name, 'main')
+  assert.strictEqual(result.offset, 0x100)
+})
+
+test('findSymbolByAddress 降级匹配', () => {
+  const symbols = [
+    { name: 'main', address: 0x08001000, size: 0, section: '.text' },
+    { name: 'printf', address: 0x08002000, size: 0, section: '.text' }
+  ]
+  const result = mapParser.findSymbolByAddress(symbols, 0x08001500)
+  assert.strictEqual(result.name, 'main')
+  assert.strictEqual(result.isApproximate, true)
+})
+
+test('findSymbolByAddress 无匹配', () => {
+  const result = mapParser.findSymbolByAddress([], 0x08001000)
+  assert.strictEqual(result, null)
+})

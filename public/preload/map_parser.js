@@ -954,11 +954,45 @@ function parse(content) {
   }
 }
 
+/**
+ * 根据地址查找符号
+ * @param {Array} symbols - 符号列表
+ * @param {number} targetAddr - 目标地址
+ * @returns {object|null} 匹配的符号或 null
+ */
+function findSymbolByAddress(symbols, targetAddr) {
+  // 精确匹配：symbol.address <= target < symbol.address + symbol.size
+  for (const sym of symbols) {
+    if (sym.size > 0 &&
+        sym.address <= targetAddr &&
+        targetAddr < sym.address + sym.size) {
+      return {
+        ...sym,
+        offset: targetAddr - sym.address
+      }
+    }
+  }
+
+  // 降级匹配：找最近地址的符号（针对 GCC size=0 的情况）
+  let nearest = null
+  let minDist = Infinity
+  for (const sym of symbols) {
+    const dist = Math.abs(sym.address - targetAddr)
+    if (dist < minDist) {
+      minDist = dist
+      nearest = sym
+    }
+  }
+
+  return nearest ? { ...nearest, offset: targetAddr - nearest.address, isApproximate: true } : null
+}
+
 // ============================================================
 // 导出
 // ============================================================
 
 module.exports = {
   parse,
-  detectFormat
+  detectFormat,
+  findSymbolByAddress
 }
