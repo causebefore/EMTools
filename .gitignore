@@ -45,3 +45,5 @@ TEST_PLAN.md
 test/hash_radix_timestamp.test.mjs
 test/vue_source_regression.test.mjs
 .worktrees/
+.codegraph/daemon.pid
+.codegraph/daemon.pid
